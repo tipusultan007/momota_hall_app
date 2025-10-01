@@ -38,9 +38,7 @@ class _SalaryDetailScreenState extends State<SalaryDetailScreen> {
 
   void _showAddPaymentDialog() {
     final amountController = TextEditingController();
-    final dateController = TextEditingController(
-      text: DateFormat('yyyy-MM-dd').format(DateTime.now()),
-    );
+    final dateController = TextEditingController(text: DateFormat('yyyy-MM-dd').format(DateTime.now()));
     final notesController = TextEditingController();
 
     showDialog(
@@ -48,54 +46,49 @@ class _SalaryDetailScreenState extends State<SalaryDetailScreen> {
       builder: (context) {
         return AlertDialog(
           title: const Text('Record Salary Payment'),
+          // ** THE FIX: Add SingleChildScrollView and Padding **
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TextField(
-                  controller: amountController,
-                  decoration: const InputDecoration(labelText: 'Amount'),
-                  keyboardType: TextInputType.number,
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: TextField(
+                    controller: amountController,
+                    decoration: const InputDecoration(labelText: 'Amount', border: OutlineInputBorder()),
+                    keyboardType: TextInputType.number,
+                  ),
                 ),
-                TextField(
-                  controller: dateController,
-                  decoration: const InputDecoration(labelText: 'Date'),
-                  readOnly: true,
-                  onTap: () async {
-                    DateTime? picked = await showDatePicker(
-                      context: context,
-                      initialDate: DateTime.now(),
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime(2100),
-                    );
-                    if (picked != null)
-                      dateController.text = DateFormat(
-                        'yyyy-MM-dd',
-                      ).format(picked);
-                  },
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: TextField(
+                    controller: dateController,
+                    decoration: const InputDecoration(labelText: 'Date', border: OutlineInputBorder(), suffixIcon: Icon(Icons.calendar_today)),
+                    readOnly: true,
+                    onTap: () async {
+                      DateTime? picked = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2100),
+                      );
+                      if (picked != null) dateController.text = DateFormat('yyyy-MM-dd').format(picked);
+                    },
+                  ),
                 ),
-                TextField(
-                  controller: notesController,
-                  decoration: const InputDecoration(
-                    labelText: 'Notes (Optional)',
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: TextField(
+                    controller: notesController,
+                    decoration: const InputDecoration(labelText: 'Notes (Optional)', border: OutlineInputBorder()),
                   ),
                 ),
               ],
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () => _submitPayment(
-                amountController.text,
-                dateController.text,
-                notesController.text,
-              ),
-              child: const Text('Submit'),
-            ),
+            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+            ElevatedButton(onPressed: () => _submitPayment(amountController.text, dateController.text, notesController.text), child: const Text('Submit')),
           ],
         );
       },

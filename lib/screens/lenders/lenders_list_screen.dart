@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
+import '../../services/permission_service.dart';
 import 'add_edit_lender_screen.dart';
 import 'lender_detail_screen.dart'; // <-- 1. Import the new screen
 
@@ -41,11 +42,13 @@ class _LendersListScreenState extends State<LendersListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Manage Lenders')),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _navigateToForm(),
-        child: const Icon(Icons.add),
-        tooltip: 'Add Lender',
-      ),
+      floatingActionButton: PermissionService().can('manage lenders')
+          ? FloatingActionButton(
+              onPressed: () => _navigateToForm(),
+              child: const Icon(Icons.add),
+              tooltip: 'Add Lender',
+            )
+          : null,
       body: RefreshIndicator(
         onRefresh: () async => _refresh(),
         child: FutureBuilder<List<dynamic>>(

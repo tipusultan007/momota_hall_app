@@ -1,42 +1,47 @@
-// lib/screens/menu/menu_screen.dart
+import 'dart:math';
+
 import 'package:flutter/material.dart';
-import '../../services/api_service.dart';
+import 'package:provider/provider.dart';
 import '../expenses/expenses_list_screen.dart';
 import '../incomes/incomes_list_screen.dart';
 import '../salaries/salaries_list_screen.dart';
 import '../workers/workers_list_screen.dart';
 import '../liabilities/borrowed_funds_list_screen.dart';
 import '../lenders/lenders_list_screen.dart';
-import '../login_screen.dart'; // For logout
-import 'package:shared_preferences/shared_preferences.dart';
+import '../login_screen.dart';
+import '../../services/auth_service.dart';
+import '../../services/permission_service.dart';
+import '../../providers/locale_provider.dart';
+import '../../l10n/app_localizations.dart';
+
 
 class MenuScreen extends StatelessWidget {
   const MenuScreen({super.key});
 
+  // Simplified and corrected logout method
   Future<void> _logout(BuildContext context) async {
-    // Show a confirmation dialog before logging out
     bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
+        final l10n = AppLocalizations.of(context)!;
         return AlertDialog(
-          title: const Text('Confirm Logout'),
-          content: const Text('Are you sure you want to log out?'),
+          title: Text(l10n.confirmLogout),
+          content: Text(l10n.areYouSureLogout),
           actions: <Widget>[
-            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
-            TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Logout')),
+            TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(l10n.cancel)),
+            TextButton(onPressed: () => Navigator.of(context).pop(true), child: Text(l10n.logout)),
           ],
         );
       },
     );
     
     if (confirmed == true) {
-      // Clear the token from shared preferences
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('token');
+      // This single call now handles clearing the token AND permissions
+      await AuthService().clearAuthData();
       
-      // Navigate to the LoginScreen and remove all previous routes
       if (context.mounted) {
-        Navigator.of(context).pushAndRemoveUntil(
+        // Use the root navigator to clear the entire navigation stack
+        Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const LoginScreen()),
           (Route<dynamic> route) => false,
         );
@@ -46,31 +51,102 @@ class MenuScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final permissions = PermissionService(); 
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Menu'),
+        title: Text(l10n.menuTitle),
       ),
       body: ListView(
         children: [
-          _buildCategoryHeader('Financial Management'),
-          _buildMenuTile(context, 'Other Income', Icons.trending_up, const IncomesListScreen()),
-          _buildMenuTile(context, 'Expenses', Icons.trending_down, const ExpensesListScreen()),
+          // Conditionally render the entire Financial Management section
+          if (permissions.can('view income') || permissions.can('view expenses')) ...[
+            _buildCategoryHeader(l10n.financialManagement),
+            if (permissions.can('view income'))
+              _buildMenuTile(context, l10n.otherIncome, Icons.trending_up, const IncomesListScreen()),
+            if (permissions.can('view expenses'))
+              _buildMenuTile(context, l10n.expenses, Icons.trending_down, const ExpensesListScreen()),
+            const Divider(),
+          ],
           
-          const Divider(),
-          _buildCategoryHeader('HR & Salaries'),
-          _buildMenuTile(context, 'Manage Salaries', Icons.payment, const SalariesListScreen()),
-          _buildMenuTile(context, 'Manage Workers', Icons.people_outline, const WorkersListScreen()),
+          // Conditionally render the entire HR & Salaries section
+          if (permissions.can('view workers') || permissions.can('view salaries')) ...[
+            _buildCategoryHeader(l10n.hrAndSalaries),
+            if (permissions.can('view salaries'))
+              _buildMenuTile(context, l10n.manageSalaries, Icons.payment, const SalariesListScreen()),
+            if (permissions.can('view workers'))
+              _buildMenuTile(context, l10n.manageWorkers, Icons.people_outline, const WorkersListScreen()),
+            const Divider(),
+          ],
           
-          const Divider(),
-          _buildCategoryHeader('Liabilities'),
-          _buildMenuTile(context, 'Borrowed Funds', Icons.account_balance, const BorrowedFundsListScreen()),
-          _buildMenuTile(context, 'Manage Lenders', Icons.business_center_outlined, const LendersListScreen()),
+          // Conditionally render the entire Liabilities section
+          if (permissions.can('view liabilities') || permissions.can('manage lenders')) ...[
+            _buildCategoryHeader(l10n.liabilities),
+            if (permissions.can('view liabilities'))
+              _buildMenuTile(context, l10n.borrowedFunds, Icons.account_balance, const BorrowedFundsListScreen()),
+            if (permissions.can('manage lenders'))
+              _buildMenuTile(context, l10n.manageLenders, Icons.business_center_outlined, const LendersListScreen()),
+            const Divider(),
+          ],
 
-          const Divider(),
+           const Divider(),
+          _buildCategoryHeader(l10n.language), // <-- New category header
+
+          // ** THE NEW LANGUAGE SWITCHER WIDGET **
+          ListTile(
+            leading: const Icon(Icons.language),
+            title: Text(l10n.changeLanguage),
+            trailing: DropdownButton<Locale>(
+              value: Provider.of<LocaleProvider>(context).locale ?? const Locale('en'), // Default to English
+              underline: const SizedBox(), // Hide the default underline
+              items: const [
+                DropdownMenuItem(value: Locale('en'), child: Text('English')),
+                DropdownMenuItem(value: Locale('bn'), child: Text('বাংলা')),
+              ],
+              onChanged: (Locale? newLocale) {
+                if (newLocale != null) {
+                  // Use the provider to set the new locale
+                  Provider.of<LocaleProvider>(context, listen: false).setLocale(newLocale);
+                }
+              },
+            ),
+          ),
+
+          // -- Account Section --
           _buildCategoryHeader('Account'),
+
+          // ** NEW "My Permissions" WIDGET **
+          Card(
+            margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+            child: ExpansionTile(
+              leading: const Icon(Icons.shield_outlined),
+              title: Text(l10n.myPermissions),
+              children: <Widget>[
+                if (permissions.getAllPermissions().isEmpty)
+                  ListTile(title: Text(l10n.noPermissionsFound))
+                else
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Wrap(
+                      spacing: 8.0,
+                      runSpacing: 4.0,
+                      children: permissions.getAllPermissions().map((permission) {
+                        return Chip(
+                          label: Text(permission),
+                          backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                          labelStyle: TextStyle(color: Theme.of(context).primaryColor),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.red),
-            title: const Text('Logout', style: TextStyle(color: Colors.red)),
+            title: Text(l10n.logout, style: const TextStyle(color: Colors.red)),
             onTap: () => _logout(context),
           ),
         ],
@@ -78,6 +154,7 @@ class MenuScreen extends StatelessWidget {
     );
   }
 
+  // --- Helper Widgets (Unchanged) ---
   Widget _buildCategoryHeader(String title) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),

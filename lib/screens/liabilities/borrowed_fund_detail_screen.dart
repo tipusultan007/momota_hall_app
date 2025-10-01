@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../services/api_service.dart';
+import '../../services/permission_service.dart';
 
 class BorrowedFundDetailScreen extends StatefulWidget {
   final int borrowedFundId;
@@ -34,7 +35,7 @@ class _BorrowedFundDetailScreenState extends State<BorrowedFundDetailScreen> {
     }
   }
 
-  void _showAddRepaymentDialog() {
+   void _showAddRepaymentDialog() {
     final amountController = TextEditingController();
     final dateController = TextEditingController(text: DateFormat('yyyy-MM-dd').format(DateTime.now()));
     final notesController = TextEditingController();
@@ -44,16 +45,43 @@ class _BorrowedFundDetailScreenState extends State<BorrowedFundDetailScreen> {
       builder: (context) {
         return AlertDialog(
           title: const Text('Record Repayment'),
+          // ** THE FIX: Add SingleChildScrollView and Padding **
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TextField(controller: amountController, decoration: const InputDecoration(labelText: 'Amount'), keyboardType: TextInputType.number),
-                TextField(controller: dateController, decoration: const InputDecoration(labelText: 'Date'), readOnly: true, onTap: () async {
-                  DateTime? picked = await showDatePicker(context: context, initialDate: DateTime.now(), firstDate: DateTime(2000), lastDate: DateTime(2100));
-                  if (picked != null) dateController.text = DateFormat('yyyy-MM-dd').format(picked);
-                }),
-                TextField(controller: notesController, decoration: const InputDecoration(labelText: 'Notes (Optional)')),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: TextField(
+                    controller: amountController,
+                    decoration: const InputDecoration(labelText: 'Amount', border: OutlineInputBorder()),
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: TextField(
+                    controller: dateController,
+                    decoration: const InputDecoration(labelText: 'Date', border: OutlineInputBorder(), suffixIcon: Icon(Icons.calendar_today)),
+                    readOnly: true,
+                    onTap: () async {
+                      DateTime? picked = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2100),
+                      );
+                      if (picked != null) dateController.text = DateFormat('yyyy-MM-dd').format(picked);
+                    },
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: TextField(
+                    controller: notesController,
+                    decoration: const InputDecoration(labelText: 'Notes (Optional)', border: OutlineInputBorder()),
+                  ),
+                ),
               ],
             ),
           ),
@@ -109,13 +137,15 @@ class _BorrowedFundDetailScreenState extends State<BorrowedFundDetailScreen> {
           },
         ),
       ),
-      floatingActionButton: _isLoading || !canAddPayment
-          ? null
-          : FloatingActionButton(
-              onPressed: _showAddRepaymentDialog,
-              child: const Icon(Icons.add),
-              tooltip: 'Record Repayment',
-            ),
+      floatingActionButton: 
+            // Check all three conditions
+            !_isLoading && canAddPayment && PermissionService().can('manage liability repayments')
+            ? FloatingActionButton(
+                onPressed: _showAddRepaymentDialog,
+                child: const Icon(Icons.add),
+                tooltip: 'Record Repayment',
+              )
+            : null,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _details == null

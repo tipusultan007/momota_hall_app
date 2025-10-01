@@ -1,9 +1,9 @@
-// lib/screens/main_screen.dart
 import 'package:flutter/material.dart';
+import 'package:momota_hall_app/l10n/app_localizations.dart';
 import 'dashboard_screen.dart';
 import 'bookings/bookings_list_screen.dart';
-import 'transactions/transactions_list_screen.dart'; // We will create this
-import 'menu/menu_screen.dart'; // We will create this
+import 'transactions/transactions_list_screen.dart';
+import 'menu/menu_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -14,12 +14,14 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
 
-  // List of the main screens for the bottom navigation bar
-  static const List<Widget> _widgetOptions = <Widget>[
-    DashboardScreen(),
-    BookingsListScreen(),
-    TransactionsListScreen(), // Placeholder for now
-    MenuScreen(), // A new screen for all other links
+  // ** THE FIX: Use an IndexedStack instead of a simple List **
+  // IndexedStack keeps all the pages in memory, preserving their state when you switch tabs.
+  // This is a significant UX improvement.
+  final List<Widget> _pages = <Widget>[
+    const DashboardScreen(),
+    const BookingsListScreen(),
+    const TransactionsListScreen(),
+    const MenuScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -30,20 +32,24 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      body: Center(
-        child: _widgetOptions.elementAt(_selectedIndex),
+      // ** THE FIX: Replace 'Center' with 'IndexedStack' **
+      // This directly places the selected page in the body, giving it the correct
+      // screen constraints to render its ListView properly.
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _pages,
       ),
       bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(icon: Icon(Icons.dashboard_outlined), activeIcon: Icon(Icons.dashboard), label: 'Dashboard'),
-          BottomNavigationBarItem(icon: Icon(Icons.calendar_today_outlined), activeIcon: Icon(Icons.calendar_today), label: 'Bookings'),
-          BottomNavigationBarItem(icon: Icon(Icons.compare_arrows_outlined), activeIcon: Icon(Icons.compare_arrows), label: 'Transactions'),
-          BottomNavigationBarItem(icon: Icon(Icons.menu_outlined), activeIcon: Icon(Icons.menu), label: 'Menu'),
+        items: <BottomNavigationBarItem>[
+          BottomNavigationBarItem(icon: const Icon(Icons.dashboard_outlined), activeIcon: const Icon(Icons.dashboard), label: l10n.dashboardTitle),
+          BottomNavigationBarItem(icon: const Icon(Icons.calendar_today_outlined), activeIcon: const Icon(Icons.calendar_today), label: l10n.bookingsTitle),
+          BottomNavigationBarItem(icon: const Icon(Icons.compare_arrows_outlined), activeIcon: const Icon(Icons.compare_arrows), label: l10n.transactionsTitle),
+          BottomNavigationBarItem(icon: const Icon(Icons.menu_outlined), activeIcon: const Icon(Icons.menu), label: l10n.menuTitle),
         ],
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
-        // These properties are essential for a professional look with 4+ items
         type: BottomNavigationBarType.fixed,
         selectedItemColor: Theme.of(context).primaryColor,
         unselectedItemColor: Colors.grey,

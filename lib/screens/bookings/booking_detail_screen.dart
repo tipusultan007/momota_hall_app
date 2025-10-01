@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // For formatting
 import '../../services/api_service.dart';
+import '../../services/permission_service.dart'; 
 
 class BookingDetailScreen extends StatefulWidget {
   final int bookingId;
@@ -12,7 +13,7 @@ class BookingDetailScreen extends StatefulWidget {
 
 class _BookingDetailScreenState extends State<BookingDetailScreen> {
   final ApiService _apiService = ApiService();
-  
+
   // We now hold the data directly in a nullable Map
   Map<String, dynamic>? _details;
   // And we use a boolean to track the loading state
@@ -28,11 +29,13 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   Future<void> _fetchDetails() async {
     // Show loading indicator only if we don't have old data
     if (_details == null) {
-      setState(() { _isLoading = true; });
+      setState(() {
+        _isLoading = true;
+      });
     }
 
     final details = await _apiService.getBookingDetails(widget.bookingId);
-    
+
     // Check if the widget is still in the tree before updating state
     if (mounted) {
       setState(() {
@@ -42,11 +45,10 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     }
   }
 
-   void _showAddPaymentDialog() {
+ void _showAddPaymentDialog() {
     final amountController = TextEditingController();
-    // Set default date to today, formatted correctly
     final dateController = TextEditingController(text: DateFormat('yyyy-MM-dd').format(DateTime.now()));
-    final notesController = TextEditingController();
+    final notesController = TextEditingController(); // Don't forget this controller
     String selectedMethod = 'Cash';
 
     showDialog(
@@ -54,37 +56,87 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       builder: (context) {
         return AlertDialog(
           title: const Text('Add Payment'),
-          content: SingleChildScrollView( // Use a scroll view to prevent overflow
+          // ** THE FIX: Add SingleChildScrollView and Padding **
+          content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TextField(controller: amountController, decoration: const InputDecoration(labelText: 'Amount'), keyboardType: TextInputType.number),
-                TextField(controller: dateController, decoration: const InputDecoration(labelText: 'Date'), readOnly: true, onTap: () async {
-                    DateTime? picked = await showDatePicker(context: context, initialDate: DateTime.now(), firstDate: DateTime(2000), lastDate: DateTime(2100));
-                    if (picked != null) dateController.text = DateFormat('yyyy-MM-dd').format(picked);
-                }),
-                DropdownButtonFormField<String>(
-                  value: selectedMethod,
-                  items: ['Cash', 'Bank Transfer', 'Mobile Banking'].map((method) => DropdownMenuItem(value: method, child: Text(method))).toList(),
-                  onChanged: (value) => selectedMethod = value!,
-                  decoration: const InputDecoration(labelText: 'Method'),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: TextField(
+                    controller: amountController,
+                    decoration: const InputDecoration(labelText: 'Amount to Pay', border: OutlineInputBorder()),
+                    keyboardType: TextInputType.number,
+                  ),
                 ),
-                TextField(controller: notesController, decoration: const InputDecoration(labelText: 'Notes (Optional)')),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: TextField(
+                    controller: dateController,
+                    decoration: const InputDecoration(labelText: 'Payment Date', border: OutlineInputBorder(), suffixIcon: Icon(Icons.calendar_today)),
+                    readOnly: true,
+                    onTap: () async {
+                      DateTime? picked = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2100),
+                      );
+                      if (picked != null) dateController.text = DateFormat('yyyy-MM-dd').format(picked);
+                    },
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: DropdownButtonFormField<String>(
+                    value: selectedMethod,
+                    items: ['Cash', 'Bank Transfer', 'Mobile Banking']
+                        .map((method) => DropdownMenuItem(value: method, child: Text(method)))
+                        .toList(),
+                    onChanged: (value) {
+                      if (value != null) selectedMethod = value;
+                    },
+                    decoration: const InputDecoration(labelText: 'Payment Method', border: OutlineInputBorder()),
+                  ),
+                ),
+                 Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: TextField(
+                    controller: notesController,
+                    decoration: const InputDecoration(labelText: 'Notes (Optional)', border: OutlineInputBorder()),
+                  ),
+                ),
               ],
             ),
           ),
           actions: [
             TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
-            ElevatedButton(onPressed: () => _submitPayment(amountController.text, dateController.text, selectedMethod, notesController.text), child: const Text('Submit')),
+            ElevatedButton(
+              onPressed: () => _submitPayment(
+                amountController.text,
+                dateController.text,
+                selectedMethod,
+                notesController.text, // Pass the notes
+              ),
+              child: const Text('Submit'),
+            ),
           ],
         );
       },
     );
   }
 
-  Future<void> _submitPayment(String amount, String date, String method, String notes) async {
+
+  Future<void> _submitPayment(
+    String amount,
+    String date,
+    String method,
+    String notes,
+  ) async {
     Navigator.of(context).pop(); // Close the dialog first
-    setState(() { _isLoading = true; }); // Show loading indicator
+    setState(() {
+      _isLoading = true;
+    }); // Show loading indicator
 
     final updatedBooking = await _apiService.addBookingPayment(
       bookingId: widget.bookingId,
@@ -96,61 +148,83 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
 
     if (mounted) {
       if (updatedBooking != null) {
-        setState(() { 
+        setState(() {
           // CRITICAL: Update our state with the new data from the API
-          _details = updatedBooking; 
+          _details = updatedBooking;
         });
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment added successfully!'), backgroundColor: Colors.green));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Payment added successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to add payment. Check input.'), backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to add payment. Check input.'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
-      setState(() { _isLoading = false; }); // Hide loading indicator
+      setState(() {
+        _isLoading = false;
+      }); // Hide loading indicator
     }
   }
 
- @override
+  @override
   Widget build(BuildContext context) {
     // Check if we should show the "Add Payment" button
     bool canAddPayment = false;
     if (_details != null) {
-      double dueAmount = double.tryParse(_details!['financials']['due_amount'].replaceAll(',', '')) ?? 0;
+      double dueAmount =
+          double.tryParse(
+            _details!['financials']['due_amount'].replaceAll(',', ''),
+          ) ??
+          0;
       canAddPayment = dueAmount > 0;
     }
 
     return Scaffold(
       appBar: AppBar(title: Text('Booking Details #${widget.bookingId}')),
       // ADD THE FLOATING ACTION BUTTON
-      floatingActionButton: _isLoading || !canAddPayment
-          ? null // Hide button while loading or if fully paid
-          : FloatingActionButton(
+        floatingActionButton: 
+          // Check all three conditions: not loading, has a balance, AND has permission
+          !_isLoading && canAddPayment && PermissionService().can('manage booking payments')
+          ? FloatingActionButton(
               onPressed: _showAddPaymentDialog,
               child: const Icon(Icons.add_shopping_cart),
               tooltip: 'Add Payment',
-            ),
-      
+            )
+          : null,
+
       // REPLACE THE FutureBuilder with a simple loading check
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _details == null
-              ? const Center(child: Text('Failed to load booking details.'))
-              : RefreshIndicator(
-                  onRefresh: _fetchDetails, // The refresh now calls our new method
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _buildFinancialCard(_details!['financials']),
-                        const SizedBox(height: 16),
-                        _buildInfoCard(_details!['customer'], _details!['event'], context),
-                        const SizedBox(height: 16),
-                        _buildDatesCard(_details!['dates'] as List, context),
-                        const SizedBox(height: 16),
-                        _buildPaymentsCard(_details!['payments'] as List, context),
-                      ],
+          ? const Center(child: Text('Failed to load booking details.'))
+          : RefreshIndicator(
+              onRefresh: _fetchDetails, // The refresh now calls our new method
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildFinancialCard(_details!['financials']),
+                    const SizedBox(height: 16),
+                    _buildInfoCard(
+                      _details!['customer'],
+                      _details!['event'],
+                      context,
                     ),
-                  ),
+                    const SizedBox(height: 16),
+                    _buildDatesCard(_details!['dates'] as List, context),
+                    const SizedBox(height: 16),
+                    _buildPaymentsCard(_details!['payments'] as List, context),
+                  ],
                 ),
+              ),
+            ),
     );
   }
 
@@ -161,16 +235,34 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildFinancialItem('Total Amount', '৳${financials['total_amount']}', Colors.black87),
-            _buildFinancialItem('Total Paid', '৳${financials['total_paid']}', Colors.green.shade700),
-            _buildFinancialItem('Amount Due', '৳${financials['due_amount']}', Colors.red.shade700, isBold: true),
+            _buildFinancialItem(
+              'Total Amount',
+              '৳${financials['total_amount']}',
+              Colors.black87,
+            ),
+            _buildFinancialItem(
+              'Total Paid',
+              '৳${financials['total_paid']}',
+              Colors.green.shade700,
+            ),
+            _buildFinancialItem(
+              'Amount Due',
+              '৳${financials['due_amount']}',
+              Colors.red.shade700,
+              isBold: true,
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildFinancialItem(String label, String value, Color color, {bool isBold = false}) {
+  Widget _buildFinancialItem(
+    String label,
+    String value,
+    Color color, {
+    bool isBold = false,
+  }) {
     return Column(
       children: [
         Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
@@ -187,14 +279,21 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     );
   }
 
-  Widget _buildInfoCard(Map<String, dynamic> customer, Map<String, dynamic> event, BuildContext context) {
+  Widget _buildInfoCard(
+    Map<String, dynamic> customer,
+    Map<String, dynamic> event,
+    BuildContext context,
+  ) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Booking Information', style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              'Booking Information',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const Divider(height: 24),
             _buildInfoRow('Customer:', customer['name']),
             _buildInfoRow('Phone:', customer['phone']),
@@ -209,7 +308,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       ),
     );
   }
-  
+
   Widget _buildInfoRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -218,7 +317,13 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         children: [
           SizedBox(
             width: 90,
-            child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black54)),
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.black54,
+              ),
+            ),
           ),
           Expanded(child: Text(value)),
         ],
@@ -233,22 +338,30 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Scheduled Dates', style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              'Scheduled Dates',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: 12),
             if (dates.isEmpty)
               const Text('No dates scheduled.')
             else
-              ...dates.map((date) => ListTile(
-                    leading: const Icon(Icons.calendar_today, color: Colors.blue),
-                    title: Text(date['date'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                    trailing: Chip(label: Text(date['slot'])),
-                  )),
+              ...dates.map(
+                (date) => ListTile(
+                  leading: const Icon(Icons.calendar_today, color: Colors.blue),
+                  title: Text(
+                    date['date'],
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  trailing: Chip(label: Text(date['slot'])),
+                ),
+              ),
           ],
         ),
       ),
     );
   }
-  
+
   Widget _buildPaymentsCard(List payments, BuildContext context) {
     final currencyFormat = NumberFormat.currency(locale: 'en_IN', symbol: '৳');
 
@@ -258,13 +371,18 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Payment History', style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              'Payment History',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: 12),
             if (payments.isEmpty)
-              const Center(child: Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text('No payments recorded yet.'),
-              ))
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text('No payments recorded yet.'),
+                ),
+              )
             else
               ListView.separated(
                 shrinkWrap: true,
@@ -274,8 +392,17 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                 itemBuilder: (context, index) {
                   final payment = payments[index];
                   return ListTile(
-                    title: Text(currencyFormat.format(double.tryParse(payment['amount'].replaceAll(',', '')) ?? 0)),
-                    subtitle: Text('${payment['date']} - ${payment['method'] ?? 'N/A'}'),
+                    title: Text(
+                      currencyFormat.format(
+                        double.tryParse(
+                              payment['amount'].replaceAll(',', ''),
+                            ) ??
+                            0,
+                      ),
+                    ),
+                    subtitle: Text(
+                      '${payment['date']} - ${payment['method'] ?? 'N/A'}',
+                    ),
                   );
                 },
               ),
