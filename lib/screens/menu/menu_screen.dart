@@ -13,6 +13,7 @@ import '../../services/auth_service.dart';
 import '../../services/permission_service.dart';
 import '../../providers/locale_provider.dart';
 import '../../l10n/app_localizations.dart';
+import 'about_screen.dart'; 
 
 
 class MenuScreen extends StatelessWidget {
@@ -115,6 +116,13 @@ class MenuScreen extends StatelessWidget {
 
           // -- Account Section --
           _buildCategoryHeader('Account'),
+
+           _buildMenuTile(
+            context,
+            'About This App', // Or use l10n.aboutApp
+            Icons.info_outline,
+            const AboutScreen(),
+          ),
 
           // ** NEW "My Permissions" WIDGET **
           Card(

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../services/api_service.dart';
-import '../../models/paginated_response.dart'; // <-- ** IMPORTANT: Import your new model **
+import '../../models/paginated_response.dart';
 import 'salary_detail_screen.dart';
+import '../../l10n/app_localizations.dart';
 
 class SalariesListScreen extends StatefulWidget {
   const SalariesListScreen({super.key});
@@ -14,19 +15,17 @@ class _SalariesListScreenState extends State<SalariesListScreen> {
   final ApiService _apiService = ApiService();
   final ScrollController _scrollController = ScrollController();
 
-  // --- NEW STATE VARIABLES FOR PAGINATION ---
   List<dynamic> _salaries = [];
   int _currentPage = 1;
   bool _hasNextPage = true;
-  bool _isLoading = true; // For the initial load
-  bool _isLoadMoreRunning = false; // To prevent multiple load more calls
-  // ------------------------------------------
+  bool _isLoading = true;
+  bool _isLoadMoreRunning = false;
 
   @override
   void initState() {
     super.initState();
     _fetchInitialSalaries();
-    _scrollController.addListener(_loadMore); // Add the scroll listener
+    _scrollController.addListener(_loadMore);
   }
 
   @override
@@ -36,14 +35,9 @@ class _SalariesListScreenState extends State<SalariesListScreen> {
     super.dispose();
   }
 
-  // Fetches the first page of data (used for initial load and pull-to-refresh)
   Future<void> _fetchInitialSalaries() async {
-    setState(() {
-      _isLoading = true; // Show main loading indicator
-    });
-    
+    setState(() { _isLoading = true; });
     PaginatedResponse response = await _apiService.getSalaries(page: 1);
-    
     if (mounted) {
       setState(() {
         _salaries = response.items;
@@ -54,16 +48,11 @@ class _SalariesListScreenState extends State<SalariesListScreen> {
     }
   }
 
-  // Fetches the next page of data when the user scrolls to the bottom
   Future<void> _loadMore() async {
     if (_hasNextPage && !_isLoading && !_isLoadMoreRunning && _scrollController.position.extentAfter < 200) {
-      setState(() {
-        _isLoadMoreRunning = true; // Show loading indicator at the bottom
-      });
-      
-      _currentPage += 1; // Go to the next page
+      setState(() { _isLoadMoreRunning = true; });
+      _currentPage++;
       PaginatedResponse response = await _apiService.getSalaries(page: _currentPage);
-      
       if (mounted) {
         setState(() {
           _salaries.addAll(response.items);
@@ -73,16 +62,16 @@ class _SalariesListScreenState extends State<SalariesListScreen> {
       }
     }
   }
-  
-  // Your existing _showGenerateDialog method remains perfect. No changes needed.
-  Future<void> _showGenerateDialog() async { /* ... same as your existing code ... */
+
+  Future<void> _showGenerateDialog() async {
+    final l10n = AppLocalizations.of(context)!;
     DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
       firstDate: DateTime(2020),
       lastDate: DateTime(2100),
       initialDatePickerMode: DatePickerMode.year,
-      helpText: 'Select Month and Year to Generate',
+      helpText: l10n.selectMonthAndYear,
     );
     if (picked != null) {
       String monthYear = DateFormat('yyyy-MM').format(picked);
@@ -92,79 +81,78 @@ class _SalariesListScreenState extends State<SalariesListScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(success ? 'Salaries for $monthYear generated successfully!' : 'Failed to generate salaries.'),
+            content: Text(success ? l10n.salariesGeneratedSuccess(monthYear) : l10n.failedToGenerateSalaries),
             backgroundColor: success ? Colors.green : Colors.red,
           ),
         );
-        if (success) _fetchInitialSalaries(); // Refresh the list
+        if (success) _fetchInitialSalaries();
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Manage Salaries'),
+        title: Text(l10n.manageSalaries),
         actions: [
           IconButton(
             onPressed: _showGenerateDialog,
             icon: const Icon(Icons.add_card),
-            tooltip: 'Generate Salaries for a Month',
+            tooltip: l10n.generateSalaries,
           ),
         ],
       ),
-      // ** CHANGE THE BODY TO USE THE NEW STATE VARIABLES **
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
-              onRefresh: _fetchInitialSalaries, // Pull to refresh calls the initial fetch
-              child: ListView.builder(
-                controller: _scrollController,
-                // Add 1 to the item count if there are more pages to load (for the spinner)
-                itemCount: _salaries.length + (_hasNextPage ? 1 : 0),
-                itemBuilder: (context, index) {
-                  // If it's the last item in the list AND there's more to load, show a spinner
-                  if (index == _salaries.length) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 32),
-                      child: Center(child: CircularProgressIndicator()),
-                    );
-                  }
-
-                  // Otherwise, build the list item as before
-                  final salary = _salaries[index];
-                  return Card(
-                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      title: Text(salary['worker_name'] ?? 'N/A', style: const TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: Text(salary['salary_month'] ?? ''),
-                      trailing: Chip(
-                        label: Text(salary['status'] ?? ''),
-                        backgroundColor: _getStatusColor(salary['status']),
-                        labelStyle: const TextStyle(color: Colors.white, fontSize: 12),
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      ),
-                      onTap: () async {
-                        final needsRefresh = await Navigator.of(context).push<bool>(
-                          MaterialPageRoute(
-                            builder: (context) => SalaryDetailScreen(monthlySalaryId: salary['id']),
+              onRefresh: _fetchInitialSalaries,
+              child: _salaries.isEmpty
+                  ? Center(child: Text(l10n.noSalaryRecordsFound, textAlign: TextAlign.center))
+                  : ListView.builder(
+                      controller: _scrollController,
+                      itemCount: _salaries.length + (_hasNextPage ? 1 : 0),
+                      itemBuilder: (context, index) {
+                        if (index == _salaries.length) {
+                          return Padding(padding: const EdgeInsets.symmetric(vertical: 32), child: Center(child: _isLoadMoreRunning ? const CircularProgressIndicator() : OutlinedButton(onPressed: _loadMore, child: Text(l10n.loadMore))));
+                        }
+                        final salary = _salaries[index];
+                        return Card(
+                          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            title: Text(salary['worker_name'] ?? 'N/A', style: const TextStyle(fontWeight: FontWeight.bold)),
+                            subtitle: Text(salary['salary_month'] ?? ''),
+                            trailing: Chip(
+                              label: Text(_getStatusText(salary['status'], l10n)),
+                              backgroundColor: _getStatusColor(salary['status']),
+                              labelStyle: const TextStyle(color: Colors.white, fontSize: 12),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            ),
+                            onTap: () async {
+                              final needsRefresh = await Navigator.of(context).push<bool>(
+                                MaterialPageRoute(builder: (context) => SalaryDetailScreen(monthlySalaryId: salary['id'])),
+                              );
+                              if (needsRefresh == true) _fetchInitialSalaries();
+                            },
                           ),
                         );
-                        // After returning, always refresh the first page to see the latest changes
-                        if (needsRefresh == true) {
-                          _fetchInitialSalaries();
-                        }
                       },
                     ),
-                  );
-                },
-              ),
             ),
     );
   }
 
+  String _getStatusText(String? status, AppLocalizations l10n) {
+    switch (status) {
+      case 'Paid': return l10n.statusPaid;
+      case 'Partially Paid': return l10n.statusPartiallyPaid;
+      case 'Unpaid': return l10n.statusUnpaid;
+      default: return status ?? '';
+    }
+  }
 
   Color _getStatusColor(String? status) {
     switch (status) {

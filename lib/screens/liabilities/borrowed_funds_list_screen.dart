@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../services/api_service.dart';
 import '../../models/paginated_response.dart';
+import '../../services/permission_service.dart';
 import 'borrowed_fund_detail_screen.dart';
 import 'add_borrowed_fund_screen.dart';
+import '../../l10n/app_localizations.dart';
 
 class BorrowedFundsListScreen extends StatefulWidget {
   const BorrowedFundsListScreen({super.key});
@@ -13,14 +15,11 @@ class BorrowedFundsListScreen extends StatefulWidget {
 
 class _BorrowedFundsListScreenState extends State<BorrowedFundsListScreen> {
   final ApiService _apiService = ApiService();
-
-  // --- State Variables ---
   List<dynamic> _funds = [];
   int _currentPage = 1;
   bool _hasNextPage = true;
   bool _isLoading = true;
   bool _isLoadMoreRunning = false;
-  
   DateTime? _startDate;
   DateTime? _endDate;
   int? _selectedLenderId;
@@ -34,14 +33,7 @@ class _BorrowedFundsListScreenState extends State<BorrowedFundsListScreen> {
 
   Future<void> _fetchInitialFunds() async {
     setState(() { _isLoading = true; });
-    
-    PaginatedResponse response = await _apiService.getBorrowedFunds(
-      page: 1,
-      startDate: _startDate,
-      endDate: _endDate,
-      lenderId: _selectedLenderId,
-    );
-    
+    PaginatedResponse response = await _apiService.getBorrowedFunds(page: 1, startDate: _startDate, endDate: _endDate, lenderId: _selectedLenderId);
     if (mounted) {
       setState(() {
         _funds = response.items;
@@ -56,12 +48,7 @@ class _BorrowedFundsListScreenState extends State<BorrowedFundsListScreen> {
     if (_hasNextPage && !_isLoading && !_isLoadMoreRunning) {
       setState(() { _isLoadMoreRunning = true; });
       _currentPage++;
-      PaginatedResponse response = await _apiService.getBorrowedFunds(
-        page: _currentPage,
-        startDate: _startDate,
-        endDate: _endDate,
-        lenderId: _selectedLenderId,
-      );
+      PaginatedResponse response = await _apiService.getBorrowedFunds(page: _currentPage, startDate: _startDate, endDate: _endDate, lenderId: _selectedLenderId);
       if (mounted) {
         setState(() {
           _funds.addAll(response.items);
@@ -105,34 +92,25 @@ class _BorrowedFundsListScreenState extends State<BorrowedFundsListScreen> {
   }
 
   void _navigateToAddFund() async {
-    final result = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (context) => const AddBorrowedFundScreen()),
-    );
-    if (result == true) {
-      _fetchInitialFunds();
-    }
+    final result = await Navigator.of(context).push<bool>(MaterialPageRoute(builder: (context) => const AddBorrowedFundScreen()));
+    if (result == true) _fetchInitialFunds();
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     bool hasFilters = _startDate != null || _endDate != null || _selectedLenderId != null;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Borrowed Funds'),
+        title: Text(l10n.borrowedFunds),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: _showFilterSheet,
-            tooltip: 'Filter Funds',
-          ),
+          IconButton(icon: const Icon(Icons.filter_list), onPressed: _showFilterSheet, tooltip: l10n.filterFunds),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _navigateToAddFund,
-        child: const Icon(Icons.add),
-        tooltip: 'Record Borrowed Fund',
-      ),
+      floatingActionButton: PermissionService().can('create liabilities')
+          ? FloatingActionButton(onPressed: _navigateToAddFund, child: const Icon(Icons.add), tooltip: l10n.recordBorrowedFund)
+          : null,
       body: Column(
         children: [
           if (hasFilters)
@@ -141,45 +119,31 @@ class _BorrowedFundsListScreenState extends State<BorrowedFundsListScreen> {
               color: Theme.of(context).primaryColor.withOpacity(0.1),
               child: Row(
                 children: [
-                  Expanded(
-                    child: Text(
-                      _buildFilterSummary(),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.clear, size: 20),
-                    onPressed: _clearFilters,
-                    tooltip: 'Clear Filters',
-                  )
+                  Expanded(child: Text(_buildFilterSummary(l10n), style: const TextStyle(fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis)),
+                  IconButton(icon: const Icon(Icons.clear, size: 20), onPressed: _clearFilters, tooltip: l10n.clearFilters)
                 ],
               ),
             ),
-          
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : RefreshIndicator(
                     onRefresh: _fetchInitialFunds,
                     child: _funds.isEmpty
-                        ? const Center(child: Text('No funds found for the selected filters.'))
+                        ? Center(child: Text(l10n.noFundsFound))
                         : ListView.builder(
                             itemCount: _funds.length + (_hasNextPage ? 1 : 0),
                             itemBuilder: (context, index) {
-                              if (index == _funds.length) {
-                                return _buildLoadMoreButton();
-                              }
-                              
+                              if (index == _funds.length) return _buildLoadMoreButton(l10n);
                               final fund = _funds[index];
                               return Card(
                                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                 child: ListTile(
                                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                   title: Text(fund['purpose'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                                  subtitle: Text('From: ${fund['lender_name']} on ${fund['date_borrowed']}'),
+                                  subtitle: Text('${l10n.from} ${fund['lender_name']} ${l10n.on} ${fund['date_borrowed']}'),
                                   trailing: Chip(
-                                    label: Text(fund['status']),
+                                    label: Text(_getStatusText(fund['status'], l10n)),
                                     backgroundColor: _getStatusColor(fund['status']),
                                     labelStyle: const TextStyle(color: Colors.white, fontSize: 12),
                                   ),
@@ -187,9 +151,7 @@ class _BorrowedFundsListScreenState extends State<BorrowedFundsListScreen> {
                                     final result = await Navigator.of(context).push<bool>(
                                       MaterialPageRoute(builder: (context) => BorrowedFundDetailScreen(borrowedFundId: fund['id'])),
                                     );
-                                    if (result == true) {
-                                      _fetchInitialFunds();
-                                    }
+                                    if (result == true) _fetchInitialFunds();
                                   },
                                 ),
                               );
@@ -202,29 +164,33 @@ class _BorrowedFundsListScreenState extends State<BorrowedFundsListScreen> {
     );
   }
 
-  String _buildFilterSummary() {
-    String summary = 'Filters: ';
+  String _buildFilterSummary(AppLocalizations l10n) {
+    String summary = '${l10n.filters} ';
     if (_startDate != null && _endDate != null) {
       summary += '${DateFormat.yMd().format(_startDate!)} - ${DateFormat.yMd().format(_endDate!)}';
     }
     if (_selectedLenderId != null) {
-      summary += '${(summary.length > 10 ? ' | ' : '')}Lender: $_selectedLenderName';
+      summary += '${(summary.length > 10 ? ' | ' : '')}${l10n.lenderSource}: $_selectedLenderName';
     }
     return summary;
   }
   
-  Widget _buildLoadMoreButton() {
+  Widget _buildLoadMoreButton(AppLocalizations l10n) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Center(
-        child: _isLoadMoreRunning
-            ? const CircularProgressIndicator()
-            : OutlinedButton(
-                onPressed: _loadMore,
-                child: const Text('Load More'),
-              ),
+        child: _isLoadMoreRunning ? const CircularProgressIndicator() : OutlinedButton(onPressed: _loadMore, child: Text(l10n.loadMore)),
       ),
     );
+  }
+
+  String _getStatusText(String? status, AppLocalizations l10n) {
+    switch (status) {
+      case 'Repaid': return l10n.statusRepaid;
+      case 'Partially Repaid': return l10n.statusPartiallyRepaid;
+      case 'Due': return l10n.statusDue;
+      default: return status ?? '';
+    }
   }
 
   Color _getStatusColor(String? status) {
@@ -301,13 +267,14 @@ class _FilterSheetState extends State<FilterSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: EdgeInsets.fromLTRB(16, 16, 16, MediaQuery.of(context).viewInsets.bottom + 16),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Filter Options', style: Theme.of(context).textTheme.titleLarge),
+          Text(l10n.filterOptions, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 16),
           _lenders == null
               ? const Center(child: CircularProgressIndicator())
@@ -318,12 +285,12 @@ class _FilterSheetState extends State<FilterSheet> {
                     _selectedLenderId = value;
                     _selectedLenderName = _lenders!.firstWhere((l) => l['id'] == value)['name'];
                   }),
-                  decoration: const InputDecoration(labelText: 'Lender/Source', border: OutlineInputBorder()),
+                  decoration: InputDecoration(labelText: l10n.lenderSource, border: const OutlineInputBorder()),
                 ),
           const SizedBox(height: 16),
           OutlinedButton.icon(
             icon: const Icon(Icons.calendar_month),
-            label: Text(_startDate == null ? 'Select Date Range' : '${DateFormat.yMd().format(_startDate!)} - ${DateFormat.yMd().format(_endDate!)}'),
+            label: Text(_startDate == null ? l10n.selectDateRange : '${DateFormat.yMd().format(_startDate!)} - ${DateFormat.yMd().format(_endDate!)}'),
             onPressed: _pickDateRange,
           ),
           const SizedBox(height: 24),
@@ -332,8 +299,8 @@ class _FilterSheetState extends State<FilterSheet> {
               widget.onFilterApplied(_startDate, _endDate, _selectedLenderId, _selectedLenderName);
               Navigator.of(context).pop();
             },
-            child: const Text('Apply Filters'),
-          )
+            child: Text(l10n.applyFilters),
+          ),
         ],
       ),
     );

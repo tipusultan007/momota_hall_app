@@ -1,17 +1,15 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/paginated_response.dart'; // <-- Import the new model
+import '../models/paginated_response.dart'; 
 import 'package:intl/intl.dart';
 import 'auth_service.dart';
-import 'permission_service.dart'; // <-- 1. Import the new permission service
+import 'permission_service.dart'; 
 
 
 class ApiService {
-  // IMPORTANT: Replace with your computer's IP address.
-  // Do NOT use localhost or 127.0.0.1, as the Android emulator runs in its own virtual machine.
-  // Find your IP by typing 'ipconfig' (Windows) or 'ifconfig' (macROS/Linux) in your terminal.
-  final String _baseUrl = "http://192.168.0.101:8000/api"; // Example IP
+
+  final String _baseUrl = "http://192.168.0.103:8000/api"; 
 
   Map<String, String> _getAuthHeaders() {
     final token = AuthService().token; // Get token directly from AuthService
@@ -157,7 +155,7 @@ Future<PaginatedResponse> getExpenses({
   }
 
 
-   Future<String?> login(String email, String password) async {
+    Future<Map<String, dynamic>?> login(String email, String password) async {
     try {
       final response = await http.post(
         Uri.parse('$_baseUrl/login'),
@@ -166,24 +164,15 @@ Future<PaginatedResponse> getExpenses({
       );
 
       print('[ApiService Login] Status Code: ${response.statusCode}');
-      print('[ApiService Login] Response Body: ${response.body}');
-
+      
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final token = data['access_token'];
-        final user = data['user'];
-        final permissions = user['permissions'];
         
-        // ** THE FIX: Use the new, single method to save everything **
-        if (user != null && permissions is List) {
-          await AuthService().saveAuthData(
-            token: token,
-            user: user,
-            permissions: permissions,
-          );
-        }
-        
-        return token;
+        // ** THE FIX: Return the entire data map **
+        // This map contains the token, user, and permissions.
+        return data;
+      } else {
+        print('[ApiService Login] Response Body: ${response.body}');
       }
     } catch (e) {
       print('[ApiService Login] Error during login request: $e');

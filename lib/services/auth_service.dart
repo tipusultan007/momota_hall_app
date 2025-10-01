@@ -15,6 +15,31 @@ class AuthService with ChangeNotifier { // Using 'with ChangeNotifier' is often 
   String? get userName => _userName;
   bool get isLoggedIn => _token != null;
 
+
+  Future<void> saveAuthDataBasedOnRememberMe({
+    required bool rememberMe,
+    required String token,
+    required Map<String, dynamic> user,
+    required List<dynamic> permissions,
+  }) async {
+    _token = token;
+    _userName = user['name'];
+    await PermissionService().savePermissions(permissions);
+
+    final prefs = await SharedPreferences.getInstance();
+    if (rememberMe) {
+      // If "Stay Logged In" is checked, save token and name permanently
+      await prefs.setString('token', token);
+      await prefs.setString('user_name', _userName!);
+    } else {
+      // Otherwise, clear any old token and name
+      await prefs.remove('token');
+      await prefs.remove('user_name');
+    }
+    
+    notifyListeners();
+  }
+
   /// Loads token, user name, and permissions from storage into memory.
   /// This should be called once when the app starts.
   Future<void> initialize() async {

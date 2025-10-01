@@ -84,6 +84,33 @@ class _AddEditBookingScreenState extends State<AddEditBookingScreen> {
     }
   }
 
+ final List<String> _eventTypes = const [
+    'Wedding', 'Gaye Holud', 'Birthday', 'Aqiqah', 'Mezban', 'Seminar'
+  ];
+  final List<String> _timeSlots = const ['Day', 'Night'];
+
+  // ** 2. Create a helper function to get the translation for a key **
+  String _getTranslatedEventType(String key, AppLocalizations l10n) {
+    switch (key) {
+      case 'Wedding': return l10n.eventTypeWedding;
+      case 'Gaye Holud': return l10n.eventTypeGayeHolud;
+      case 'Birthday': return l10n.eventTypeBirthday;
+      case 'Aqiqah': return l10n.eventTypeAqiqah;
+      case 'Mezban': return l10n.eventTypeMezban;
+      case 'Seminar': return l10n.eventTypeSeminar;
+      default: return key; // Fallback to the key itself
+    }
+  }
+
+  String _getTranslatedSlot(String key, AppLocalizations l10n) {
+    switch (key) {
+      case 'Day': return l10n.slotDay;
+      case 'Night': return l10n.slotNight;
+      default: return key;
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -142,9 +169,15 @@ class _AddEditBookingScreenState extends State<AddEditBookingScreen> {
                         children: [
                           DropdownButtonFormField<String>(
                             value: _selectedEventType,
-                            items: ['Wedding', 'Gaye Holud', 'Birthday', 'Aqiqah', 'Mezban', 'Seminar'].map((type) => DropdownMenuItem(value: type, child: Text(type))).toList(),
+                            // Map over your English keys to create the items
+                            items: _eventTypes.map((String typeKey) {
+                              return DropdownMenuItem<String>(
+                                value: typeKey, // The value is the English key
+                                child: Text(_getTranslatedEventType(typeKey, l10n)), // The display is the translation
+                              );
+                            }).toList(),
                             onChanged: (value) => setState(() => _selectedEventType = value!),
-                            decoration: InputDecoration(labelText: l10n.eventType, border: OutlineInputBorder()),
+                            decoration: InputDecoration(labelText: l10n.eventType, border: const OutlineInputBorder()),
                           ),
                           const SizedBox(height: 16),
                           TextFormField(controller: _receiptNoController, decoration: InputDecoration(labelText: l10n.manualReceiptNo, border: OutlineInputBorder())),
@@ -218,7 +251,8 @@ class _AddEditBookingScreenState extends State<AddEditBookingScreen> {
   /// Builds the UI for the date picker, time slot dropdown, and "Add Date" button.
   Widget _buildDateAdder(AppLocalizations l10n) {
     final dateController = TextEditingController();
-    String selectedSlot = 'Day';
+    //String selectedSlot = 'Day';
+    String selectedSlot = _timeSlots[0]; // Default to first slot
 
     return StatefulBuilder(
       builder: (context, setInnerState) {
@@ -252,10 +286,13 @@ class _AddEditBookingScreenState extends State<AddEditBookingScreen> {
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
                   value: selectedSlot,
-                  items: ['Day', 'Night'].map((slot) => DropdownMenuItem(
-                    value: slot,
-                    child: Text(slot),
-                  )).toList(),
+                  // Map over the English keys to create the items
+                  items: _timeSlots.map((String slotKey) {
+                    return DropdownMenuItem<String>(
+                      value: slotKey, // The value is the English key ('Day' or 'Night')
+                      child: Text(_getTranslatedSlot(slotKey, l10n)), // The display is the translation
+                    );
+                  }).toList(),
                   onChanged: (value) {
                     if (value != null) {
                       setInnerState(() {
@@ -265,7 +302,7 @@ class _AddEditBookingScreenState extends State<AddEditBookingScreen> {
                   },
                   decoration: InputDecoration(
                     labelText: l10n.timeSlot,
-                    border: OutlineInputBorder(),
+                    border: const OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -318,7 +355,7 @@ class _AddEditBookingScreenState extends State<AddEditBookingScreen> {
               child: ListTile(
                 leading: const Icon(Icons.check_circle_outline, color: Colors.green),
                 title: Text(DateFormat('MMMM d, yyyy').format(DateTime.parse(dateEntry['date']!))),
-                subtitle: Text('${l10n.timeSlot}: ${dateEntry['slot']}'),
+                subtitle: Text('${l10n.timeSlot}: ${_getTranslatedSlot(dateEntry['slot']!, l10n)}'),
                 trailing: IconButton(
                   icon: const Icon(Icons.delete_outline, color: Colors.red),
                   onPressed: () => _removeDateFromList(index),

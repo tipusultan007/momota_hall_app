@@ -266,6 +266,42 @@ abstract class AppLocalizations {
   /// **'Cancel'**
   String get cancel;
 
+  /// No description provided for @eventTypeWedding.
+  ///
+  /// In en, this message translates to:
+  /// **'Wedding'**
+  String get eventTypeWedding;
+
+  /// No description provided for @eventTypeGayeHolud.
+  ///
+  /// In en, this message translates to:
+  /// **'Gaye Holud'**
+  String get eventTypeGayeHolud;
+
+  /// No description provided for @eventTypeBirthday.
+  ///
+  /// In en, this message translates to:
+  /// **'Birthday'**
+  String get eventTypeBirthday;
+
+  /// No description provided for @eventTypeAqiqah.
+  ///
+  /// In en, this message translates to:
+  /// **'Aqiqah'**
+  String get eventTypeAqiqah;
+
+  /// No description provided for @eventTypeMezban.
+  ///
+  /// In en, this message translates to:
+  /// **'Mezban'**
+  String get eventTypeMezban;
+
+  /// No description provided for @eventTypeSeminar.
+  ///
+  /// In en, this message translates to:
+  /// **'Seminar'**
+  String get eventTypeSeminar;
+
   /// No description provided for @createNewBooking.
   ///
   /// In en, this message translates to:
@@ -398,6 +434,18 @@ abstract class AppLocalizations {
   /// **'Time Slot'**
   String get timeSlot;
 
+  /// No description provided for @slotDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Day'**
+  String get slotDay;
+
+  /// No description provided for @slotNight.
+  ///
+  /// In en, this message translates to:
+  /// **'Night'**
+  String get slotNight;
+
   /// No description provided for @addedDates.
   ///
   /// In en, this message translates to:
@@ -433,6 +481,696 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Remove Date'**
   String get removeDate;
+
+  /// No description provided for @bookingDetailsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking Details'**
+  String get bookingDetailsTitle;
+
+  /// No description provided for @addPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Payment'**
+  String get addPayment;
+
+  /// No description provided for @failedToLoadBooking.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load booking details.'**
+  String get failedToLoadBooking;
+
+  /// No description provided for @totalPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Paid'**
+  String get totalPaid;
+
+  /// No description provided for @amountDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount Due'**
+  String get amountDue;
+
+  /// No description provided for @bookingInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking Information'**
+  String get bookingInformation;
+
+  /// No description provided for @scheduledDates.
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduled Dates'**
+  String get scheduledDates;
+
+  /// No description provided for @paymentHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment History'**
+  String get paymentHistory;
+
+  /// No description provided for @noDatesScheduled.
+  ///
+  /// In en, this message translates to:
+  /// **'No dates scheduled.'**
+  String get noDatesScheduled;
+
+  /// No description provided for @noPaymentsRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'No payments recorded yet.'**
+  String get noPaymentsRecorded;
+
+  /// No description provided for @amountToPay.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount to Pay'**
+  String get amountToPay;
+
+  /// No description provided for @paymentDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Date'**
+  String get paymentDate;
+
+  /// No description provided for @paymentMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Method'**
+  String get paymentMethod;
+
+  /// No description provided for @notesOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes (Optional)'**
+  String get notesOptional;
+
+  /// No description provided for @submit.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit'**
+  String get submit;
+
+  /// No description provided for @paymentAddedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment added successfully!'**
+  String get paymentAddedSuccess;
+
+  /// No description provided for @paymentFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to add payment. Check input.'**
+  String get paymentFailed;
+
+  /// No description provided for @paymentMethodCash.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash'**
+  String get paymentMethodCash;
+
+  /// No description provided for @paymentMethodBank.
+  ///
+  /// In en, this message translates to:
+  /// **'Bank Transfer'**
+  String get paymentMethodBank;
+
+  /// No description provided for @paymentMethodMobile.
+  ///
+  /// In en, this message translates to:
+  /// **'Mobile Banking'**
+  String get paymentMethodMobile;
+
+  /// No description provided for @editIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Income'**
+  String get editIncome;
+
+  /// No description provided for @logNewIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Log New Income'**
+  String get logNewIncome;
+
+  /// No description provided for @category.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get category;
+
+  /// No description provided for @pleaseSelectCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a category'**
+  String get pleaseSelectCategory;
+
+  /// No description provided for @amount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get amount;
+
+  /// No description provided for @pleaseEnterAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter an amount'**
+  String get pleaseEnterAmount;
+
+  /// No description provided for @date.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get date;
+
+  /// No description provided for @descriptionOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Description (Optional)'**
+  String get descriptionOptional;
+
+  /// No description provided for @updateIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Income'**
+  String get updateIncome;
+
+  /// No description provided for @saveIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Income'**
+  String get saveIncome;
+
+  /// No description provided for @incomeUpdatedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Income updated successfully!'**
+  String get incomeUpdatedSuccess;
+
+  /// No description provided for @incomeLoggedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Income logged successfully!'**
+  String get incomeLoggedSuccess;
+
+  /// No description provided for @failedToUpdateIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to update income.'**
+  String get failedToUpdateIncome;
+
+  /// No description provided for @failedToLogIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to log income.'**
+  String get failedToLogIncome;
+
+  /// No description provided for @allIncomes.
+  ///
+  /// In en, this message translates to:
+  /// **'All Other Income'**
+  String get allIncomes;
+
+  /// No description provided for @filterIncomes.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter Incomes'**
+  String get filterIncomes;
+
+  /// No description provided for @logIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Log Income'**
+  String get logIncome;
+
+  /// No description provided for @noIncomesFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No income records found for the selected filters.'**
+  String get noIncomesFound;
+
+  /// No description provided for @confirmDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Delete'**
+  String get confirmDelete;
+
+  /// No description provided for @areYouSureDeleteIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you wish to delete this income record?'**
+  String get areYouSureDeleteIncome;
+
+  /// No description provided for @incomeDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Income record deleted'**
+  String get incomeDeleted;
+
+  /// No description provided for @failedToDeleteIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to delete income'**
+  String get failedToDeleteIncome;
+
+  /// No description provided for @delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get delete;
+
+  /// No description provided for @filters.
+  ///
+  /// In en, this message translates to:
+  /// **'Filters:'**
+  String get filters;
+
+  /// No description provided for @clearFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Filters'**
+  String get clearFilters;
+
+  /// No description provided for @loadMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Load More'**
+  String get loadMore;
+
+  /// No description provided for @filterOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter Options'**
+  String get filterOptions;
+
+  /// No description provided for @selectDateRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Date Range'**
+  String get selectDateRange;
+
+  /// No description provided for @applyFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply Filters'**
+  String get applyFilters;
+
+  /// No description provided for @editExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Expense'**
+  String get editExpense;
+
+  /// No description provided for @logNewExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Log New Expense'**
+  String get logNewExpense;
+
+  /// No description provided for @updateExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Expense'**
+  String get updateExpense;
+
+  /// No description provided for @saveExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Expense'**
+  String get saveExpense;
+
+  /// No description provided for @expenseUpdatedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense updated successfully!'**
+  String get expenseUpdatedSuccess;
+
+  /// No description provided for @expenseLoggedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense logged successfully!'**
+  String get expenseLoggedSuccess;
+
+  /// No description provided for @failedToUpdateExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to update expense.'**
+  String get failedToUpdateExpense;
+
+  /// No description provided for @failedToLogExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to log expense.'**
+  String get failedToLogExpense;
+
+  /// No description provided for @allExpenses.
+  ///
+  /// In en, this message translates to:
+  /// **'All Expenses'**
+  String get allExpenses;
+
+  /// No description provided for @filterExpenses.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter Expenses'**
+  String get filterExpenses;
+
+  /// No description provided for @logExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Log Expense'**
+  String get logExpense;
+
+  /// No description provided for @noExpensesFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No expenses found for the selected filters.'**
+  String get noExpensesFound;
+
+  /// No description provided for @areYouSureDeleteExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you wish to delete this expense?'**
+  String get areYouSureDeleteExpense;
+
+  /// No description provided for @expenseDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense deleted'**
+  String get expenseDeleted;
+
+  /// No description provided for @failedToDeleteExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to delete expense'**
+  String get failedToDeleteExpense;
+
+  /// No description provided for @noDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'No description'**
+  String get noDescription;
+
+  /// No description provided for @salaryDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Salary Details'**
+  String get salaryDetails;
+
+  /// No description provided for @recordPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Record Payment'**
+  String get recordPayment;
+
+  /// No description provided for @failedToLoadSalary.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load salary details.'**
+  String get failedToLoadSalary;
+
+  /// No description provided for @totalSalary.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Salary'**
+  String get totalSalary;
+
+  /// No description provided for @salaryInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Salary Information'**
+  String get salaryInformation;
+
+  /// No description provided for @worker.
+  ///
+  /// In en, this message translates to:
+  /// **'Worker:'**
+  String get worker;
+
+  /// No description provided for @salaryFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Salary For:'**
+  String get salaryFor;
+
+  /// No description provided for @status.
+  ///
+  /// In en, this message translates to:
+  /// **'Status:'**
+  String get status;
+
+  /// No description provided for @noPaymentsThisMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'No payments recorded for this month.'**
+  String get noPaymentsThisMonth;
+
+  /// No description provided for @paymentRecordedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment recorded successfully!'**
+  String get paymentRecordedSuccess;
+
+  /// No description provided for @failedToRecordPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to record payment.'**
+  String get failedToRecordPayment;
+
+  /// No description provided for @generateSalaries.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate Salaries for a Month'**
+  String get generateSalaries;
+
+  /// No description provided for @selectMonthAndYear.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Month and Year to Generate'**
+  String get selectMonthAndYear;
+
+  /// No description provided for @salariesGeneratedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Salaries for {monthYear} generated successfully!'**
+  String salariesGeneratedSuccess(Object monthYear);
+
+  /// No description provided for @failedToGenerateSalaries.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to generate salaries.'**
+  String get failedToGenerateSalaries;
+
+  /// No description provided for @noSalaryRecordsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No salary records found.\nTry generating for a month.'**
+  String get noSalaryRecordsFound;
+
+  /// No description provided for @statusPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get statusPaid;
+
+  /// No description provided for @statusPartiallyPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Partially Paid'**
+  String get statusPartiallyPaid;
+
+  /// No description provided for @statusUnpaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Unpaid'**
+  String get statusUnpaid;
+
+  /// No description provided for @filterFunds.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter Funds'**
+  String get filterFunds;
+
+  /// No description provided for @recordBorrowedFund.
+  ///
+  /// In en, this message translates to:
+  /// **'Record Borrowed Fund'**
+  String get recordBorrowedFund;
+
+  /// No description provided for @noFundsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No borrowed funds found for the selected filters.'**
+  String get noFundsFound;
+
+  /// No description provided for @from.
+  ///
+  /// In en, this message translates to:
+  /// **'From:'**
+  String get from;
+
+  /// No description provided for @on.
+  ///
+  /// In en, this message translates to:
+  /// **'on'**
+  String get on;
+
+  /// No description provided for @lenderSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Lender/Source'**
+  String get lenderSource;
+
+  /// No description provided for @statusRepaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Repaid'**
+  String get statusRepaid;
+
+  /// No description provided for @statusPartiallyRepaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Partially Repaid'**
+  String get statusPartiallyRepaid;
+
+  /// No description provided for @statusDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Due'**
+  String get statusDue;
+
+  /// No description provided for @manageRepayments.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Repayments'**
+  String get manageRepayments;
+
+  /// No description provided for @recordRepayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Record Repayment'**
+  String get recordRepayment;
+
+  /// No description provided for @failedToLoadDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load details.'**
+  String get failedToLoadDetails;
+
+  /// No description provided for @totalBorrowed.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Borrowed'**
+  String get totalBorrowed;
+
+  /// No description provided for @totalRepaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Repaid'**
+  String get totalRepaid;
+
+  /// No description provided for @loanInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Loan Information'**
+  String get loanInformation;
+
+  /// No description provided for @purpose.
+  ///
+  /// In en, this message translates to:
+  /// **'Purpose:'**
+  String get purpose;
+
+  /// No description provided for @dateBorrowed.
+  ///
+  /// In en, this message translates to:
+  /// **'Date Borrowed:'**
+  String get dateBorrowed;
+
+  /// No description provided for @repaymentHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Repayment History'**
+  String get repaymentHistory;
+
+  /// No description provided for @noRepaymentsRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'No repayments recorded for this loan.'**
+  String get noRepaymentsRecorded;
+
+  /// No description provided for @repaymentRecordedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Repayment recorded successfully!'**
+  String get repaymentRecordedSuccess;
+
+  /// No description provided for @failedToRecordRepayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to record repayment.'**
+  String get failedToRecordRepayment;
+
+  /// No description provided for @retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retry;
+
+  /// No description provided for @pleaseSelectLender.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a lender/source'**
+  String get pleaseSelectLender;
+
+  /// No description provided for @amountBorrowed.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount Borrowed'**
+  String get amountBorrowed;
+
+  /// No description provided for @pleaseEnterPurpose.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a purpose'**
+  String get pleaseEnterPurpose;
+
+  /// No description provided for @saveRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Record'**
+  String get saveRecord;
+
+  /// No description provided for @fundRecordCreatedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Fund record created successfully!'**
+  String get fundRecordCreatedSuccess;
+
+  /// No description provided for @failedToCreateRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to create record.'**
+  String get failedToCreateRecord;
+
+  /// No description provided for @stayLoggedIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Stay Logged In'**
+  String get stayLoggedIn;
+
+  /// No description provided for @login.
+  ///
+  /// In en, this message translates to:
+  /// **'Log In'**
+  String get login;
+
+  /// No description provided for @welcomeToLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome Back! Sign in to continue.'**
+  String get welcomeToLogin;
 }
 
 class _AppLocalizationsDelegate

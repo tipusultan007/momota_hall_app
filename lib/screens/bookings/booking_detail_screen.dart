@@ -1,8 +1,8 @@
-// lib/screens/bookings/booking_detail_screen.dart
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // For formatting
+import 'package:intl/intl.dart';
 import '../../services/api_service.dart';
-import '../../services/permission_service.dart'; 
+import '../../services/permission_service.dart';
+import '../../l10n/app_localizations.dart'; // <-- Import the l10n class
 
 class BookingDetailScreen extends StatefulWidget {
   final int bookingId;
@@ -13,50 +13,45 @@ class BookingDetailScreen extends StatefulWidget {
 
 class _BookingDetailScreenState extends State<BookingDetailScreen> {
   final ApiService _apiService = ApiService();
-
-  // We now hold the data directly in a nullable Map
   Map<String, dynamic>? _details;
-  // And we use a boolean to track the loading state
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _fetchDetails(); // Call our new data fetching method
+    _fetchDetails();
   }
 
-  // New method to fetch data and update the state
   Future<void> _fetchDetails() async {
-    // Show loading indicator only if we don't have old data
-    if (_details == null) {
-      setState(() {
-        _isLoading = true;
-      });
-    }
-
+    if (_details == null) setState(() => _isLoading = true);
     final details = await _apiService.getBookingDetails(widget.bookingId);
-
-    // Check if the widget is still in the tree before updating state
-    if (mounted) {
+    if (mounted)
       setState(() {
         _details = details;
         _isLoading = false;
       });
-    }
   }
 
- void _showAddPaymentDialog() {
+  void _showAddPaymentDialog(AppLocalizations l10n) {
     final amountController = TextEditingController();
-    final dateController = TextEditingController(text: DateFormat('yyyy-MM-dd').format(DateTime.now()));
-    final notesController = TextEditingController(); // Don't forget this controller
+    final dateController = TextEditingController(
+      text: DateFormat('yyyy-MM-dd').format(DateTime.now()),
+    );
+    final notesController = TextEditingController();
     String selectedMethod = 'Cash';
+
+    // Create a map for translatable payment methods
+    final Map<String, String> paymentMethods = {
+      'Cash': l10n.paymentMethodCash,
+      'Bank Transfer': l10n.paymentMethodBank,
+      'Mobile Banking': l10n.paymentMethodMobile,
+    };
 
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Add Payment'),
-          // ** THE FIX: Add SingleChildScrollView and Padding **
+          title: Text(l10n.addPayment),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -65,7 +60,10 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
                   child: TextField(
                     controller: amountController,
-                    decoration: const InputDecoration(labelText: 'Amount to Pay', border: OutlineInputBorder()),
+                    decoration: InputDecoration(
+                      labelText: l10n.amountToPay,
+                      border: const OutlineInputBorder(),
+                    ),
                     keyboardType: TextInputType.number,
                   ),
                 ),
@@ -73,7 +71,11 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
                   child: TextField(
                     controller: dateController,
-                    decoration: const InputDecoration(labelText: 'Payment Date', border: OutlineInputBorder(), suffixIcon: Icon(Icons.calendar_today)),
+                    decoration: InputDecoration(
+                      labelText: l10n.paymentDate,
+                      border: const OutlineInputBorder(),
+                      suffixIcon: const Icon(Icons.calendar_today),
+                    ),
                     readOnly: true,
                     onTap: () async {
                       DateTime? picked = await showDatePicker(
@@ -82,7 +84,10 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                         firstDate: DateTime(2000),
                         lastDate: DateTime(2100),
                       );
-                      if (picked != null) dateController.text = DateFormat('yyyy-MM-dd').format(picked);
+                      if (picked != null)
+                        dateController.text = DateFormat(
+                          'yyyy-MM-dd',
+                        ).format(picked);
                     },
                   ),
                 ),
@@ -90,35 +95,50 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
                   child: DropdownButtonFormField<String>(
                     value: selectedMethod,
-                    items: ['Cash', 'Bank Transfer', 'Mobile Banking']
-                        .map((method) => DropdownMenuItem(value: method, child: Text(method)))
+                    items: paymentMethods.keys
+                        .map(
+                          (methodKey) => DropdownMenuItem(
+                            value: methodKey,
+                            child: Text(paymentMethods[methodKey]!),
+                          ),
+                        )
                         .toList(),
                     onChanged: (value) {
                       if (value != null) selectedMethod = value;
                     },
-                    decoration: const InputDecoration(labelText: 'Payment Method', border: OutlineInputBorder()),
+                    decoration: InputDecoration(
+                      labelText: l10n.paymentMethod,
+                      border: const OutlineInputBorder(),
+                    ),
                   ),
                 ),
-                 Padding(
+                Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
                   child: TextField(
                     controller: notesController,
-                    decoration: const InputDecoration(labelText: 'Notes (Optional)', border: OutlineInputBorder()),
+                    decoration: InputDecoration(
+                      labelText: l10n.notesOptional,
+                      border: const OutlineInputBorder(),
+                    ),
                   ),
                 ),
               ],
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(l10n.cancel),
+            ),
             ElevatedButton(
               onPressed: () => _submitPayment(
                 amountController.text,
                 dateController.text,
                 selectedMethod,
-                notesController.text, // Pass the notes
+                notesController.text,
+                l10n,
               ),
-              child: const Text('Submit'),
+              child: Text(l10n.submit),
             ),
           ],
         );
@@ -126,17 +146,15 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     );
   }
 
-
   Future<void> _submitPayment(
     String amount,
     String date,
     String method,
     String notes,
+    AppLocalizations l10n,
   ) async {
-    Navigator.of(context).pop(); // Close the dialog first
-    setState(() {
-      _isLoading = true;
-    }); // Show loading indicator
+    Navigator.of(context).pop();
+    setState(() => _isLoading = true);
 
     final updatedBooking = await _apiService.addBookingPayment(
       bookingId: widget.bookingId,
@@ -148,33 +166,28 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
 
     if (mounted) {
       if (updatedBooking != null) {
-        setState(() {
-          // CRITICAL: Update our state with the new data from the API
-          _details = updatedBooking;
-        });
+        setState(() => _details = updatedBooking);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Payment added successfully!'),
+          SnackBar(
+            content: Text(l10n.paymentAddedSuccess),
             backgroundColor: Colors.green,
           ),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to add payment. Check input.'),
+          SnackBar(
+            content: Text(l10n.paymentFailed),
             backgroundColor: Colors.red,
           ),
         );
       }
-      setState(() {
-        _isLoading = false;
-      }); // Hide loading indicator
+      setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Check if we should show the "Add Payment" button
+    final l10n = AppLocalizations.of(context)!;
     bool canAddPayment = false;
     if (_details != null) {
       double dueAmount =
@@ -186,31 +199,31 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text('Booking Details #${widget.bookingId}')),
-      // ADD THE FLOATING ACTION BUTTON
-        floatingActionButton: 
-          // Check all three conditions: not loading, has a balance, AND has permission
-          !_isLoading && canAddPayment && PermissionService().can('manage booking payments')
+      appBar: AppBar(
+        title: Text('${l10n.bookingDetailsTitle} #${widget.bookingId}'),
+      ),
+      floatingActionButton:
+          !_isLoading &&
+              canAddPayment &&
+              PermissionService().can('manage booking payments')
           ? FloatingActionButton(
-              onPressed: _showAddPaymentDialog,
+              onPressed: () => _showAddPaymentDialog(l10n),
               child: const Icon(Icons.add_shopping_cart),
-              tooltip: 'Add Payment',
+              tooltip: l10n.addPayment,
             )
           : null,
-
-      // REPLACE THE FutureBuilder with a simple loading check
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _details == null
-          ? const Center(child: Text('Failed to load booking details.'))
+          ? Center(child: Text(l10n.failedToLoadBooking))
           : RefreshIndicator(
-              onRefresh: _fetchDetails, // The refresh now calls our new method
+              onRefresh: _fetchDetails,
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _buildFinancialCard(_details!['financials']),
+                    _buildFinancialCard(_details!['financials'], l10n),
                     const SizedBox(height: 16),
                     _buildInfoCard(
                       _details!['customer'],
@@ -228,7 +241,10 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     );
   }
 
-  Widget _buildFinancialCard(Map<String, dynamic> financials) {
+  Widget _buildFinancialCard(
+    Map<String, dynamic> financials,
+    AppLocalizations l10n,
+  ) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -236,17 +252,17 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _buildFinancialItem(
-              'Total Amount',
+              l10n.totalAmount,
               '৳${financials['total_amount']}',
               Colors.black87,
             ),
             _buildFinancialItem(
-              'Total Paid',
+              l10n.totalPaid,
               '৳${financials['total_paid']}',
               Colors.green.shade700,
             ),
             _buildFinancialItem(
-              'Amount Due',
+              l10n.amountDue,
               '৳${financials['due_amount']}',
               Colors.red.shade700,
               isBold: true,
@@ -284,6 +300,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     Map<String, dynamic> event,
     BuildContext context,
   ) {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -291,18 +308,18 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Booking Information',
+              l10n.bookingInformation,
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const Divider(height: 24),
-            _buildInfoRow('Customer:', customer['name']),
-            _buildInfoRow('Phone:', customer['phone']),
-            _buildInfoRow('Address:', customer['address'] ?? 'N/A'),
+            _buildInfoRow(l10n.customerName, customer['name']),
+            _buildInfoRow(l10n.customerPhone, customer['phone']),
+            _buildInfoRow(l10n.address, customer['address'] ?? 'N/A'),
             const SizedBox(height: 16),
-            _buildInfoRow('Event Type:', event['type']),
-            _buildInfoRow('Guests:', event['guests']?.toString() ?? 'N/A'),
-            _buildInfoRow('Tables:', event['tables']?.toString() ?? 'N/A'),
-            _buildInfoRow('Servers:', event['servers']?.toString() ?? 'N/A'),
+            _buildInfoRow(l10n.eventType, event['type']),
+            _buildInfoRow(l10n.guests, event['guests']?.toString() ?? 'N/A'),
+            _buildInfoRow(l10n.tables, event['tables']?.toString() ?? 'N/A'),
+            _buildInfoRow(l10n.servers, event['servers']?.toString() ?? 'N/A'),
           ],
         ),
       ),
@@ -332,6 +349,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   }
 
   Widget _buildDatesCard(List dates, BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -339,12 +357,12 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Scheduled Dates',
+              l10n.scheduledDates,
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 12),
             if (dates.isEmpty)
-              const Text('No dates scheduled.')
+              Text(l10n.noDatesScheduled)
             else
               ...dates.map(
                 (date) => ListTile(
@@ -353,7 +371,9 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                     date['date'],
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  trailing: Chip(label: Text(date['slot'])),
+                  trailing: Chip(
+                    label: Text(date['slot']),
+                  ), // Slot is already translated
                 ),
               ),
           ],
@@ -363,8 +383,8 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   }
 
   Widget _buildPaymentsCard(List payments, BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final currencyFormat = NumberFormat.currency(locale: 'en_IN', symbol: '৳');
-
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -372,15 +392,15 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Payment History',
+              l10n.paymentHistory,
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 12),
             if (payments.isEmpty)
-              const Center(
+              Center(
                 child: Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Text('No payments recorded yet.'),
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(l10n.noPaymentsRecorded),
                 ),
               )
             else

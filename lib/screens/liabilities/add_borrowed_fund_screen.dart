@@ -1,7 +1,7 @@
-// lib/screens/liabilities/add_borrowed_fund_screen.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../services/api_service.dart';
+import '../../l10n/app_localizations.dart';
 
 class AddBorrowedFundScreen extends StatefulWidget {
   const AddBorrowedFundScreen({super.key});
@@ -19,7 +19,7 @@ class _AddBorrowedFundScreenState extends State<AddBorrowedFundScreen> {
   
   int? _selectedLenderId;
   List<dynamic>? _lenders;
-  bool _isLoading = false;
+  bool _isLoading = true; // Start loading for categories
 
   @override
   void initState() {
@@ -29,12 +29,16 @@ class _AddBorrowedFundScreenState extends State<AddBorrowedFundScreen> {
 
   Future<void> _fetchLenders() async {
     final lenders = await _apiService.getLenders();
-    setState(() {
-      _lenders = lenders;
-    });
+    if(mounted) {
+      setState(() {
+        _lenders = lenders;
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _submitForm() async {
+    final l10n = AppLocalizations.of(context)!;
     if (_formKey.currentState!.validate()) {
       setState(() { _isLoading = true; });
 
@@ -47,10 +51,10 @@ class _AddBorrowedFundScreenState extends State<AddBorrowedFundScreen> {
       
       if (mounted) {
         if (success) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Fund record created successfully!'), backgroundColor: Colors.green));
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.fundRecordCreatedSuccess), backgroundColor: Colors.green));
           Navigator.of(context).pop(true);
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to create record.'), backgroundColor: Colors.red));
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.failedToCreateRecord), backgroundColor: Colors.red));
           setState(() { _isLoading = false; });
         }
       }
@@ -59,9 +63,11 @@ class _AddBorrowedFundScreenState extends State<AddBorrowedFundScreen> {
   
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Record Borrowed Fund')),
-      body: _lenders == null
+      appBar: AppBar(title: Text(l10n.recordBorrowedFund)),
+      body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
@@ -70,6 +76,7 @@ class _AddBorrowedFundScreenState extends State<AddBorrowedFundScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    if(_lenders != null)
                     DropdownButtonFormField<int>(
                       value: _selectedLenderId,
                       items: _lenders!.map((lender) => DropdownMenuItem<int>(
@@ -77,20 +84,20 @@ class _AddBorrowedFundScreenState extends State<AddBorrowedFundScreen> {
                         child: Text(lender['name']),
                       )).toList(),
                       onChanged: (value) => setState(() => _selectedLenderId = value),
-                      decoration: const InputDecoration(labelText: 'Lender/Source', border: OutlineInputBorder()),
-                      validator: (value) => value == null ? 'Please select a lender' : null,
+                      decoration: InputDecoration(labelText: l10n.lenderSource, border: const OutlineInputBorder()),
+                      validator: (value) => value == null ? l10n.pleaseSelectLender : null,
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _amountController,
-                      decoration: const InputDecoration(labelText: 'Amount Borrowed', border: OutlineInputBorder(), prefixText: '৳'),
+                      decoration: InputDecoration(labelText: l10n.amountBorrowed, border: const OutlineInputBorder(), prefixText: '৳'),
                       keyboardType: TextInputType.number,
-                      validator: (value) => (value == null || value.isEmpty) ? 'Please enter an amount' : null,
+                      validator: (value) => (value == null || value.isEmpty) ? l10n.pleaseEnterAmount : null,
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _dateController,
-                      decoration: const InputDecoration(labelText: 'Date', border: OutlineInputBorder(), suffixIcon: Icon(Icons.calendar_today)),
+                      decoration: InputDecoration(labelText: l10n.date, border: const OutlineInputBorder(), suffixIcon: const Icon(Icons.calendar_today)),
                       readOnly: true,
                       onTap: () async {
                         DateTime? picked = await showDatePicker(context: context, initialDate: DateTime.now(), firstDate: DateTime(2000), lastDate: DateTime(2100));
@@ -100,17 +107,15 @@ class _AddBorrowedFundScreenState extends State<AddBorrowedFundScreen> {
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _purposeController,
-                      decoration: const InputDecoration(labelText: 'Purpose', border: OutlineInputBorder()),
-                      validator: (value) => (value == null || value.isEmpty) ? 'Please enter a purpose' : null,
+                      decoration: InputDecoration(labelText: l10n.purpose, border: const OutlineInputBorder()),
+                      validator: (value) => (value == null || value.isEmpty) ? l10n.pleaseEnterPurpose : null,
                     ),
                     const SizedBox(height: 32),
-                    _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : ElevatedButton(
-                          onPressed: _submitForm,
-                          child: const Text('Save Record'),
-                          style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
-                        )
+                    ElevatedButton(
+                      onPressed: _isLoading ? null : _submitForm,
+                      child: Text(l10n.saveRecord),
+                      style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+                    )
                   ],
                 ),
               ),

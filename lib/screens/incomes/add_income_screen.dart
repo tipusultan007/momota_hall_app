@@ -1,10 +1,9 @@
-// lib/screens/incomes/add_income_screen.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../services/api_service.dart';
+import '../../l10n/app_localizations.dart'; // Import the l10n class
 
 class AddIncomeScreen extends StatefulWidget {
-  // Add an optional incomeId. If it's not null, we are in "Edit" mode.
   final int? incomeId;
   const AddIncomeScreen({super.key, this.incomeId});
   
@@ -22,7 +21,7 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
   
   int? _selectedCategoryId;
   List<dynamic>? _categories;
-  bool _isLoading = true; // Start loading immediately
+  bool _isLoading = true;
   bool get _isEditMode => widget.incomeId != null;
 
   @override
@@ -31,23 +30,17 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
     _initializeData();
   }
   
-  // New method to load all necessary data
   Future<void> _initializeData() async {
-    // Fetch categories regardless of mode
     final categories = await _apiService.getIncomeCategories();
-    
-    // If in Edit mode, fetch the specific income data
     if (_isEditMode) {
       final incomeData = await _apiService.getIncome(widget.incomeId!);
       if (incomeData != null) {
-        // Populate controllers with existing data
         _amountController.text = incomeData['amount'].replaceAll(',', '');
         _dateController.text = DateFormat('yyyy-MM-dd').format(DateFormat('MMM d, yyyy').parse(incomeData['date']));
         _descriptionController.text = incomeData['description'] ?? '';
         _selectedCategoryId = categories?.firstWhere((cat) => cat['name'] == incomeData['category_name'], orElse: () => null)?['id'];
       }
     } else {
-      // In Add mode, just set the default date
       _dateController.text = DateFormat('yyyy-MM-dd').format(DateTime.now());
     }
     
@@ -60,6 +53,7 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
   }
 
   Future<void> _submitIncome() async {
+    final l10n = AppLocalizations.of(context)!;
     if (_formKey.currentState!.validate()) {
       setState(() { _isLoading = true; });
 
@@ -82,10 +76,12 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
       
       if (mounted) {
         if (result != null) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Income ${_isEditMode ? 'updated' : 'logged'} successfully!'), backgroundColor: Colors.green));
+          final successMessage = _isEditMode ? l10n.incomeUpdatedSuccess : l10n.incomeLoggedSuccess;
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(successMessage), backgroundColor: Colors.green));
           Navigator.of(context).pop(true);
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to ${_isEditMode ? 'update' : 'log'} income.'), backgroundColor: Colors.red));
+          final errorMessage = _isEditMode ? l10n.failedToUpdateIncome : l10n.failedToLogIncome;
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorMessage), backgroundColor: Colors.red));
           setState(() { _isLoading = false; });
         }
       }
@@ -94,8 +90,10 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
   
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
-      appBar: AppBar(title: Text(_isEditMode ? 'Edit Income' : 'Log New Income')),
+      appBar: AppBar(title: Text(_isEditMode ? l10n.editIncome : l10n.logNewIncome)),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -113,20 +111,20 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
                         child: Text(cat['name']),
                       )).toList(),
                       onChanged: (value) => setState(() => _selectedCategoryId = value),
-                      decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
-                      validator: (value) => value == null ? 'Please select a category' : null,
+                      decoration: InputDecoration(labelText: l10n.category, border: const OutlineInputBorder()),
+                      validator: (value) => value == null ? l10n.pleaseSelectCategory : null,
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _amountController,
-                      decoration: const InputDecoration(labelText: 'Amount', border: OutlineInputBorder(), prefixText: '৳'),
+                      decoration: InputDecoration(labelText: l10n.amount, border: const OutlineInputBorder(), prefixText: '৳'),
                       keyboardType: TextInputType.number,
-                      validator: (value) => (value == null || value.isEmpty) ? 'Please enter an amount' : null,
+                      validator: (value) => (value == null || value.isEmpty) ? l10n.pleaseEnterAmount : null,
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _dateController,
-                      decoration: const InputDecoration(labelText: 'Date', border: OutlineInputBorder(), suffixIcon: Icon(Icons.calendar_today)),
+                      decoration: InputDecoration(labelText: l10n.date, border: const OutlineInputBorder(), suffixIcon: const Icon(Icons.calendar_today)),
                       readOnly: true,
                       onTap: () async {
                         DateTime? picked = await showDatePicker(context: context, initialDate: DateTime.tryParse(_dateController.text) ?? DateTime.now(), firstDate: DateTime(2000), lastDate: DateTime(2100));
@@ -136,13 +134,13 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _descriptionController,
-                      decoration: const InputDecoration(labelText: 'Description (Optional)', border: OutlineInputBorder()),
+                      decoration: InputDecoration(labelText: l10n.descriptionOptional, border: const OutlineInputBorder()),
                       maxLines: 3,
                     ),
                     const SizedBox(height: 32),
                     ElevatedButton(
-                      onPressed: _submitIncome,
-                      child: Text(_isEditMode ? 'Update Income' : 'Save Income'),
+                      onPressed: _isLoading ? null : _submitIncome,
+                      child: Text(_isEditMode ? l10n.updateIncome : l10n.saveIncome),
                       style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
                     )
                   ],

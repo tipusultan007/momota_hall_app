@@ -4,6 +4,8 @@ import '../../models/paginated_response.dart';
 import 'add_expense_screen.dart';
 import 'package:intl/intl.dart';
 import '../../services/permission_service.dart';
+import '../../l10n/app_localizations.dart';
+
 
 
 class ExpensesListScreen extends StatefulWidget {
@@ -129,157 +131,73 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    // Determine if any filters are currently active
-    bool hasFilters =
-        _startDate != null || _endDate != null || _selectedCategoryId != null;
+Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    bool hasFilters = _startDate != null || _endDate != null || _selectedCategoryId != null;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('All Expenses'),
+        title: Text(l10n.allExpenses),
         actions: [
-          // Filter button in the AppBar
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: _showFilterSheet,
-            tooltip: 'Filter Expenses',
-          ),
+          IconButton(icon: const Icon(Icons.filter_list), onPressed: _showFilterSheet, tooltip: l10n.filterExpenses),
         ],
       ),
-       floatingActionButton: PermissionService().can('create expenses')
-          ? FloatingActionButton(
-              onPressed: _navigateToAddExpense,
-              child: const Icon(Icons.add),
-              tooltip: 'Log Expense',
-            )
+      floatingActionButton: PermissionService().can('create expenses')
+          ? FloatingActionButton(onPressed: _navigateToAddExpense, child: const Icon(Icons.add), tooltip: l10n.logExpense)
           : null,
       body: Column(
         children: [
-          // This header will only appear if filters are active
           if (hasFilters)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               color: Theme.of(context).primaryColor.withOpacity(0.1),
               child: Row(
                 children: [
-                  Expanded(
-                    child: Text(
-                      _buildFilterSummary(), // Call helper to build summary text
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  // "Clear Filter" button
-                  IconButton(
-                    icon: const Icon(Icons.clear, size: 20),
-                    onPressed: _clearFilters,
-                    tooltip: 'Clear Filters',
-                  ),
+                  Expanded(child: Text(_buildFilterSummary(l10n), style: const TextStyle(fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis)),
+                  IconButton(icon: const Icon(Icons.clear, size: 20), onPressed: _clearFilters, tooltip: l10n.clearFilters)
                 ],
               ),
             ),
-
-          // The main list view
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : RefreshIndicator(
                     onRefresh: _fetchInitialExpenses,
                     child: _expenses.isEmpty
-                        ? const Center(
-                            child: Text(
-                              'No expenses found for the selected filters.',
-                            ),
-                          )
+                        ? Center(child: Text(l10n.noExpensesFound))
                         : ListView.builder(
-                            // The scroll controller is no longer needed here with the button
-                            itemCount:
-                                _expenses.length + (_hasNextPage ? 1 : 0),
+                            itemCount: _expenses.length + (_hasNextPage ? 1 : 0),
                             itemBuilder: (context, index) {
-                              // If it's the last item and there's more data, show the load more button
-                              if (index == _expenses.length) {
-                                return _buildLoadMoreButton();
-                              }
-
+                              if (index == _expenses.length) return _buildLoadMoreButton(l10n);
                               final expense = _expenses[index];
                               return Dismissible(
                                 key: Key(expense['id'].toString()),
                                 direction: DismissDirection.endToStart,
-                                background: Container(
-                                  color: Colors.red,
-                                  alignment: Alignment.centerRight,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 20.0,
-                                  ),
-                                  child: const Icon(
-                                    Icons.delete,
-                                    color: Colors.white,
+                                background: Container(color: Colors.red, alignment: Alignment.centerRight, padding: const EdgeInsets.symmetric(horizontal: 20.0), child: const Icon(Icons.delete, color: Colors.white)),
+                                confirmDismiss: (direction) async => await showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) => AlertDialog(
+                                    title: Text(l10n.confirmDelete),
+                                    content: Text(l10n.areYouSureDeleteExpense),
+                                    actions: [
+                                      TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(l10n.cancel.toUpperCase())),
+                                      TextButton(onPressed: () => Navigator.of(context).pop(true), child: Text(l10n.delete.toUpperCase())),
+                                    ],
                                   ),
                                 ),
-                                confirmDismiss: (direction) async {
-                                  return await showDialog(
-                                    context: context,
-                                    builder: (BuildContext context) => AlertDialog(
-                                      title: const Text("Confirm Delete"),
-                                      content: const Text(
-                                        "Are you sure you wish to delete this expense?",
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.of(context).pop(false),
-                                          child: const Text("CANCEL"),
-                                        ),
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.of(context).pop(true),
-                                          child: const Text("DELETE"),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
                                 onDismissed: (direction) async {
-                                  bool deleted = await _apiService
-                                      .deleteExpense(expense['id']);
+                                  bool deleted = await _apiService.deleteExpense(expense['id']);
                                   if (mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          deleted
-                                              ? 'Expense deleted'
-                                              : 'Failed to delete expense',
-                                        ),
-                                      ),
-                                    );
-                                    if (deleted) {
-                                      setState(() {
-                                        _expenses.removeAt(index);
-                                      });
-                                    }
+                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(deleted ? l10n.expenseDeleted : l10n.failedToDeleteExpense)));
+                                    if (deleted) setState(() => _expenses.removeAt(index));
                                   }
                                 },
                                 child: Card(
-                                  margin: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 8,
-                                  ),
+                                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                   child: ListTile(
-                                    title: Text(
-                                      '৳${expense['amount'] ?? '0.00'} - ${expense['category_name'] ?? 'N/A'}',
-                                    ),
-                                    subtitle: Text(
-                                      expense['description'] ??
-                                          'No description',
-                                    ),
-                                    trailing: IconButton(
-                                      icon: const Icon(
-                                        Icons.edit,
-                                        color: Colors.grey,
-                                      ),
-                                      onPressed: () =>
-                                          _navigateToEditExpense(expense['id']),
-                                    ),
+                                    title: Text('৳${expense['amount'] ?? '0.00'} - ${expense['category_name'] ?? 'N/A'}'),
+                                    subtitle: Text(expense['description'] ?? l10n.noDescription),
+                                    trailing: PermissionService().can('edit expenses') ? IconButton(icon: const Icon(Icons.edit, color: Colors.grey), onPressed: () => _navigateToEditExpense(expense['id'])) : null,
                                   ),
                                 ),
                               );
@@ -292,30 +210,24 @@ class _ExpensesListScreenState extends State<ExpensesListScreen> {
     );
   }
 
-  String _buildFilterSummary() {
-    String summary = 'Filters: ';
+  String _buildFilterSummary(AppLocalizations l10n) {
+    String summary = '${l10n.filters} ';
     if (_startDate != null && _endDate != null) {
-      summary +=
-          '${DateFormat.yMd().format(_startDate!)} - ${DateFormat.yMd().format(_endDate!)}';
+      summary += '${DateFormat.yMd().format(_startDate!)} - ${DateFormat.yMd().format(_endDate!)}';
     }
     if (_selectedCategoryId != null) {
-      summary +=
-          '${(summary.length > 10 ? ' | ' : '')}Category: $_selectedCategoryName';
+      summary += '${(summary.length > 10 ? ' | ' : '')}${l10n.category}: $_selectedCategoryName';
     }
     return summary;
   }
 
-  // 5. Load More Button Helper
-  Widget _buildLoadMoreButton() {
+  Widget _buildLoadMoreButton(AppLocalizations l10n) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Center(
         child: _isLoadMoreRunning
             ? const CircularProgressIndicator()
-            : OutlinedButton(
-                onPressed: _loadMore,
-                child: const Text('Load More'),
-              ),
+            : OutlinedButton(onPressed: _loadMore, child: Text(l10n.loadMore)),
       ),
     );
   }
@@ -392,59 +304,39 @@ class _FilterSheetState extends State<FilterSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: EdgeInsets.fromLTRB(16, 16, 16, MediaQuery.of(context).viewInsets.bottom + 16),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Filter Options', style: Theme.of(context).textTheme.titleLarge),
+          Text(l10n.filterOptions, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 16),
           _categories == null
               ? const Center(child: CircularProgressIndicator())
               : DropdownButtonFormField<int>(
                   value: _selectedCategoryId,
-                  items: _categories!
-                      .map(
-                        (cat) => DropdownMenuItem<int>(
-                          value: cat['id'],
-                          child: Text(cat['name']),
-                        ),
-                      )
-                      .toList(),
+                  items: _categories!.map((cat) => DropdownMenuItem<int>(value: cat['id'], child: Text(cat['name']))).toList(),
                   onChanged: (value) => setState(() {
                     _selectedCategoryId = value;
-                    _selectedCategoryName = _categories!.firstWhere(
-                      (c) => c['id'] == value,
-                    )['name'];
+                    _selectedCategoryName = _categories!.firstWhere((c) => c['id'] == value)['name'];
                   }),
-                  decoration: const InputDecoration(
-                    labelText: 'Category',
-                    border: OutlineInputBorder(),
-                  ),
+                  decoration: InputDecoration(labelText: l10n.category, border: const OutlineInputBorder()),
                 ),
           const SizedBox(height: 16),
           OutlinedButton.icon(
             icon: const Icon(Icons.calendar_month),
-            label: Text(
-              _startDate == null
-                  ? 'Select Date Range'
-                  : '${DateFormat.yMd().format(_startDate!)} - ${DateFormat.yMd().format(_endDate!)}',
-            ),
+            label: Text(_startDate == null ? l10n.selectDateRange : '${DateFormat.yMd().format(_startDate!)} - ${DateFormat.yMd().format(_endDate!)}'),
             onPressed: _pickDateRange,
           ),
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: () {
-              widget.onFilterApplied(
-                _startDate,
-                _endDate,
-                _selectedCategoryId,
-                _selectedCategoryName,
-              );
+              widget.onFilterApplied(_startDate, _endDate, _selectedCategoryId, _selectedCategoryName);
               Navigator.of(context).pop();
             },
-            child: const Text('Apply Filters'),
+            child: Text(l10n.applyFilters),
           ),
         ],
       ),

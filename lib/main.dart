@@ -55,11 +55,23 @@ class _MyAppState extends State<MyApp> {
     return Consumer<LocaleProvider>(
       builder: (context, localeProvider, child) {
         // This MaterialApp will rebuild whenever the language changes.
+        const Color primaryBlue = Color(0xFF2A3B4D);
+        const Color accentGold = Color(0xFFC5A880);
         return MaterialApp(
           title: 'Momota Hall App',
           theme: ThemeData(
-            primarySwatch: Colors.indigo,
             useMaterial3: true,
+        primaryColor: primaryBlue, // Main brand color
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: primaryBlue,
+          primary: primaryBlue,
+          secondary: accentGold,
+        ),
+        scaffoldBackgroundColor: const Color(0xFFFDFCF8), // Off-white background
+        appBarTheme: const AppBarTheme(
+          backgroundColor: primaryBlue,
+          foregroundColor: Colors.white, // Text/icon color on app bar
+        ),
             fontFamily: 'Poppins', // Example of setting a default app font
             inputDecorationTheme: InputDecorationTheme(
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
