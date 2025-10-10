@@ -9,6 +9,9 @@ class AppLocalizationsBn extends AppLocalizations {
   AppLocalizationsBn([String locale = 'bn']) : super(locale);
 
   @override
+  String get orgName => 'মমতা কমিউনিটি সেন্টার';
+
+  @override
   String get dashboardTitle => 'ড্যাশবোর্ড';
 
   @override
@@ -93,6 +96,12 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get cancel => 'বাতিল';
+
+  @override
+  String get phone => 'মোবাইল নম্বর';
+
+  @override
+  String get password => 'পাসওয়ার্ড';
 
   @override
   String get eventTypeWedding => 'বিয়ে';
@@ -457,6 +466,9 @@ class AppLocalizationsBn extends AppLocalizations {
   String get statusPaid => 'পরিশোধিত';
 
   @override
+  String get statusPending => 'বকেয়া';
+
+  @override
   String get statusPartiallyPaid => 'আংশিক পরিশোধিত';
 
   @override
@@ -557,4 +569,84 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get welcomeToLogin => 'স্বাগতম! চালিয়ে যেতে সাইন ইন করুন।';
+
+  @override
+  String get newBooking => 'নতুন বুকিং';
+
+  @override
+  String get filterByDate => 'তারিখের সীমা দ্বারা ফিল্টার করুন';
+
+  @override
+  String get searchByHint => 'নাম, ফোন, ইভেন্ট দ্বারা অনুসন্ধান...';
+
+  @override
+  String get noBookingsFoundFilters =>
+      'নির্বাচিত ফিল্টারের জন্য কোনো বুকিং পাওয়া যায়নি।';
+
+  @override
+  String get areYouSureDeleteBooking =>
+      'আপনি কি এই বুকিংটি মুছে ফেলতে নিশ্চিত?';
+
+  @override
+  String get bookingDeleted => 'বুকিং মুছে ফেলা হয়েছে';
+
+  @override
+  String get failedToDeleteBooking => 'বুকিং মুছতে ব্যর্থ হয়েছে';
+
+  @override
+  String get financialSummary => 'আর্থিক সারসংক্ষেপ';
+
+  @override
+  String get generateReport => 'রিপোর্ট তৈরি করুন';
+
+  @override
+  String get openingBalance => 'প্রারম্ভিক ব্যালেন্স';
+
+  @override
+  String get closingBalance => 'সমাপনী ব্যালেন্স';
+
+  @override
+  String get totalIncomePeriod => 'মোট আয় (সময়কাল)';
+
+  @override
+  String get totalExpensesPeriod => 'মোট খরচ (সময়কাল)';
+
+  @override
+  String get incomeCredits => 'আয় / ক্রেডিট';
+
+  @override
+  String get expensesDebits => 'খরচ / ডেবিট';
+
+  @override
+  String get netCashFlow => 'সময়কালের জন্য নেট ক্যাশ ফ্লো';
+
+  @override
+  String get bookingPayments => 'বুকিং পেমেন্ট';
+
+  @override
+  String get generalExpenses => 'সাধারণ খরচ';
+
+  @override
+  String get salaryPayments => 'বেতন প্রদান';
+
+  @override
+  String get loanRepayments => 'ঋণ পরিশোধ';
+
+  @override
+  String get period => 'সময়কাল:';
+
+  @override
+  String get totalIncome => 'মোট আয়';
+
+  @override
+  String get totalExpenses => 'মোট খরচ';
+
+  @override
+  String get bookingCalendar => 'বুকিং ক্যালেন্ডার';
+
+  @override
+  String get noBookingsForDay => 'এই দিনে কোনো বুকিং নেই।';
+
+  @override
+  String get dueAmount => 'বকেয়া পরিমাণ';
 }

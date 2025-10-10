@@ -13,7 +13,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen>
     with SingleTickerProviderStateMixin {
-  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _apiService = ApiService();
 
@@ -39,7 +39,7 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   void dispose() {
     _animationController.dispose();
-    _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -52,7 +52,7 @@ class _LoginScreenState extends State<LoginScreen>
 
     // ** THE FIX: The variable 'loginResult' is now a Map, not a String **
     final Map<String, dynamic>? loginResult = await _apiService.login(
-      _emailController.text,
+      _phoneController.text,
       _passwordController.text,
     );
 
@@ -133,9 +133,9 @@ class _LoginScreenState extends State<LoginScreen>
                         // Use the dark accent color for text on the light glass background
                         Image.asset('assets/icon/launcher_icon.png', height: 64, width: 64),
                         const SizedBox(height: 16),
-                        const Text(
-                          'Momota Hall',
-                          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: darkAccent),
+                        Text(
+                          l10n.orgName,
+                          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: darkAccent),
                         ),
                         const SizedBox(height: 8),
                         Text(
@@ -146,23 +146,23 @@ class _LoginScreenState extends State<LoginScreen>
 
                         // Form Fields styled for a light glass background
                         TextFormField(
-                          controller: _emailController,
+                          controller: _phoneController,
                           style: const TextStyle(color: darkAccent),
                           decoration: InputDecoration(
-                            labelText: 'Email',
+                            labelText: l10n.phone,
                             labelStyle: TextStyle(color: darkAccent.withOpacity(0.7)),
-                            prefixIcon: const Icon(Icons.email_outlined, color: darkAccent),
+                            prefixIcon: const Icon(Icons.phone_outlined, color: darkAccent),
                             enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: darkAccent.withOpacity(0.3))),
                             focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: darkAccent)),
                           ),
-                          keyboardType: TextInputType.emailAddress,
+                          keyboardType: TextInputType.phone,
                         ),
                         const SizedBox(height: 16),
                         TextFormField(
                           controller: _passwordController,
                           style: const TextStyle(color: darkAccent),
                           decoration: InputDecoration(
-                            labelText: 'Password',
+                            labelText: l10n.password,
                             labelStyle: TextStyle(color: darkAccent.withOpacity(0.7)),
                             prefixIcon: const Icon(Icons.lock_outline, color: darkAccent),
                             enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: darkAccent.withOpacity(0.3))),

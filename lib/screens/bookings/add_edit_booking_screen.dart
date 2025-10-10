@@ -6,11 +6,9 @@ import 'package:momota_hall_app/l10n/app_localizations.dart';
 import '../../services/api_service.dart';
 
 class AddEditBookingScreen extends StatefulWidget {
-  // You can pass a booking map here for editing in the future
-  // final Map<String, dynamic>? booking;
-  // const AddEditBookingScreen({super.key, this.booking});
+  final int? bookingId;
+  const AddEditBookingScreen({super.key, this.bookingId});
 
-  const AddEditBookingScreen({super.key});
   @override
   State<AddEditBookingScreen> createState() => _AddEditBookingScreenState();
 }
@@ -30,17 +28,70 @@ class _AddEditBookingScreenState extends State<AddEditBookingScreen> {
   final _totalAmountController = TextEditingController();
   final _advanceAmountController = TextEditingController();
   final _notesInWordsController = TextEditingController();
-  
+
   String _selectedEventType = 'Wedding';
-  final List<Map<String, String>> _bookingDates = [];
-  bool _isLoading = false;
+  List<Map<String, String>> _bookingDates = [];
+  bool _isLoading =
+      true; // Start true to handle initial data loading in edit mode
+  bool get _isEditMode => widget.bookingId != null;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeData();
+  }
+
+  Future<void> _initializeData() async {
+    if (_isEditMode) {
+      final bookingData = await _apiService.getBookingDetails(
+        widget.bookingId!,
+      );
+      if (bookingData != null && mounted) {
+        // Pre-fill all controllers and state variables from the fetched data
+        _customerNameController.text = bookingData['customer']['name'] ?? '';
+        _customerPhoneController.text = bookingData['customer']['phone'] ?? '';
+        _customerAddressController.text =
+            bookingData['customer']['address'] ?? '';
+        _receiptNoController.text = bookingData['receipt_no'] ?? '';
+        _guestsController.text =
+            bookingData['event']['guests']?.toString() ?? '';
+        _tablesController.text =
+            bookingData['event']['tables']?.toString() ?? '';
+        _serversController.text =
+            bookingData['event']['servers']?.toString() ?? '';
+        _totalAmountController.text =
+            bookingData['financials']['total_amount']?.replaceAll(',', '') ??
+            '';
+        _advanceAmountController.text =
+            bookingData['financials']['total_paid']?.replaceAll(',', '') ?? '';
+        _notesInWordsController.text = bookingData['notes_in_words'] ?? '';
+
+        setState(() {
+          _selectedEventType = bookingData['event']['type'] ?? 'Wedding';
+          _bookingDates = (bookingData['dates'] as List).map<Map<String, String>>((
+            date,
+          ) {
+            // Convert the formatted date string back to 'yyyy-MM-dd' for the hidden input
+            final parsedDate = DateFormat(
+              'EEEE, MMMM d, yyyy',
+            ).parse(date['date']);
+            return {
+              'date': DateFormat('yyyy-MM-dd').format(parsedDate),
+              'slot': date['slot'].toString(),
+            };
+          }).toList();
+        });
+      }
+    }
+    if (mounted) setState(() => _isLoading = false);
+  }
 
   void _addDateToList(String date, String slot) {
     setState(() {
       _bookingDates.add({'date': date, 'slot': slot});
     });
   }
-  
+
   void _removeDateFromList(int index) {
     setState(() {
       _bookingDates.removeAt(index);
@@ -51,200 +102,371 @@ class _AddEditBookingScreenState extends State<AddEditBookingScreen> {
     final l10n = AppLocalizations.of(context)!;
     if (_formKey.currentState!.validate()) {
       if (_bookingDates.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.pleaseAddDate), backgroundColor: Colors.orange));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.pleaseAddDate),
+            backgroundColor: Colors.orange,
+          ),
+        );
         return;
       }
-      
-      setState(() { _isLoading = true; });
 
-      final newBooking = await _apiService.addBooking(
-        customerName: _customerNameController.text,
-        customerPhone: _customerPhoneController.text,
-        customerAddress: _customerAddressController.text,
-        eventType: _selectedEventType,
-        receiptNo: _receiptNoController.text,
-        guests: _guestsController.text,
-        tables: _tablesController.text,
-        servers: _serversController.text,
-        totalAmount: _totalAmountController.text,
-        advanceAmount: _advanceAmountController.text,
-        notesInWords: _notesInWordsController.text,
-        bookingDates: _bookingDates,
-      );
+      setState(() {
+        _isLoading = true;
+      });
+
+      final apiCall = _isEditMode
+          ? _apiService.updateBooking(
+              id: widget.bookingId!,
+              customerName: _customerNameController.text,
+              customerPhone: _customerPhoneController.text,
+              customerAddress: _customerAddressController.text,
+              eventType: _selectedEventType,
+              receiptNo: _receiptNoController.text,
+              guests: _guestsController.text,
+              tables: _tablesController.text,
+              servers: _serversController.text,
+              totalAmount: _totalAmountController.text,
+              notesInWords: _notesInWordsController.text,
+              bookingDates: _bookingDates,
+            )
+          : _apiService.addBooking(
+              customerName: _customerNameController.text,
+              customerPhone: _customerPhoneController.text,
+              customerAddress: _customerAddressController.text,
+              eventType: _selectedEventType,
+              receiptNo: _receiptNoController.text,
+              guests: _guestsController.text,
+              tables: _tablesController.text,
+              servers: _serversController.text,
+              totalAmount: _totalAmountController.text,
+              advanceAmount: _advanceAmountController.text,
+              notesInWords: _notesInWordsController.text,
+              bookingDates: _bookingDates,
+            );
+
+      final result = await apiCall;
 
       if (mounted) {
-        if (newBooking != null) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.bookingCreatedSuccess), backgroundColor: Colors.green));
+        if (result != null) {
+          final successMessage = _isEditMode
+              ? "Booking updated successfully!"
+              : l10n.bookingCreatedSuccess;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(successMessage),
+              backgroundColor: Colors.green,
+            ),
+          );
           Navigator.of(context).pop(true); // Return true to refresh list
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.bookingFailed), backgroundColor: Colors.red));
-          setState(() { _isLoading = false; });
+          final errorMessage = _isEditMode
+              ? "Failed to update booking."
+              : l10n.bookingFailed;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
+          );
+          setState(() {
+            _isLoading = false;
+          });
         }
       }
     }
   }
 
- final List<String> _eventTypes = const [
-    'Wedding', 'Gaye Holud', 'Birthday', 'Aqiqah', 'Mezban', 'Seminar'
+  // --- Helper methods for translation (unchanged) ---
+  final List<String> _eventTypes = const [
+    'Wedding',
+    'Gaye Holud',
+    'Birthday',
+    'Aqiqah',
+    'Mezban',
+    'Seminar',
   ];
   final List<String> _timeSlots = const ['Day', 'Night'];
-
-  // ** 2. Create a helper function to get the translation for a key **
   String _getTranslatedEventType(String key, AppLocalizations l10n) {
     switch (key) {
-      case 'Wedding': return l10n.eventTypeWedding;
-      case 'Gaye Holud': return l10n.eventTypeGayeHolud;
-      case 'Birthday': return l10n.eventTypeBirthday;
-      case 'Aqiqah': return l10n.eventTypeAqiqah;
-      case 'Mezban': return l10n.eventTypeMezban;
-      case 'Seminar': return l10n.eventTypeSeminar;
-      default: return key; // Fallback to the key itself
+      case 'Wedding':
+        return l10n.eventTypeWedding;
+      case 'Gaye Holud':
+        return l10n.eventTypeGayeHolud;
+      case 'Birthday':
+        return l10n.eventTypeBirthday;
+      case 'Aqiqah':
+        return l10n.eventTypeAqiqah;
+      case 'Mezban':
+        return l10n.eventTypeMezban;
+      case 'Seminar':
+        return l10n.eventTypeSeminar;
+      default:
+        return key; // Fallback to the key itself
     }
   }
 
   String _getTranslatedSlot(String key, AppLocalizations l10n) {
     switch (key) {
-      case 'Day': return l10n.slotDay;
-      case 'Night': return l10n.slotNight;
-      default: return key;
+      case 'Day':
+        return l10n.slotDay;
+      case 'Night':
+        return l10n.slotNight;
+      default:
+        return key;
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.createNewBooking),
+        title: Text(_isEditMode ? "Edit Booking" : l10n.createNewBooking),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 8.0),
-            child: _isLoading ? const Center(child: CircularProgressIndicator(color: Colors.white)) : IconButton(
-              icon: const Icon(Icons.save),
-              onPressed: _submitForm,
-              tooltip: l10n.saveBooking,
-            ),
-          )
+            child: _isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(color: Colors.white),
+                  )
+                : IconButton(
+                    icon: const Icon(Icons.save),
+                    onPressed: _submitForm,
+                    tooltip: _isEditMode ? "Update Booking" : l10n.saveBooking,
+                  ),
+          ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(8.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // --- Section 1: Customer Details ---
-              Card(
-                child: ExpansionTile(
-                  title: Text('1. ${l10n.customerDetails}', style: TextStyle(fontWeight: FontWeight.bold)),
-                  initiallyExpanded: true,
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(8.0),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
+                    // --- Customer Details ---
+                    Card(
+                      child: ExpansionTile(
+                        title: Text(
+                          '1. ${l10n.customerDetails}',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        initiallyExpanded: true,
                         children: [
-                          TextFormField(controller: _customerNameController, decoration: InputDecoration(labelText: l10n.customerName, border: const OutlineInputBorder()), validator: (v) => v!.isEmpty ? 'Required' : null),
-                          const SizedBox(height: 16),
-                          TextFormField(controller: _customerPhoneController, decoration: InputDecoration(labelText: l10n.customerPhone, border: const OutlineInputBorder()), keyboardType: TextInputType.phone, validator: (v) => v!.isEmpty ? 'Required' : null),
-                          const SizedBox(height: 16),
-                          TextFormField(controller: _customerAddressController, decoration: InputDecoration(labelText: l10n.address, border: const OutlineInputBorder()), maxLines: 2),
-                        ],
-                      ),
-                    )
-                  ],
-                ),
-              ),
-
-              // --- Section 2: Event Details ---
-              Card(
-                child: ExpansionTile(
-                  title: Text('2. ${l10n.eventDetails}', style: TextStyle(fontWeight: FontWeight.bold)),
-                  initiallyExpanded: true,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        children: [
-                          DropdownButtonFormField<String>(
-                            value: _selectedEventType,
-                            // Map over your English keys to create the items
-                            items: _eventTypes.map((String typeKey) {
-                              return DropdownMenuItem<String>(
-                                value: typeKey, // The value is the English key
-                                child: Text(_getTranslatedEventType(typeKey, l10n)), // The display is the translation
-                              );
-                            }).toList(),
-                            onChanged: (value) => setState(() => _selectedEventType = value!),
-                            decoration: InputDecoration(labelText: l10n.eventType, border: const OutlineInputBorder()),
+                          Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              children: [
+                                TextFormField(
+                                  controller: _customerNameController,
+                                  decoration: InputDecoration(
+                                    labelText: l10n.customerName,
+                                    border: const OutlineInputBorder(),
+                                  ),
+                                  validator: (v) =>
+                                      v!.isEmpty ? l10n.requiredField : null,
+                                ),
+                                const SizedBox(height: 16),
+                                TextFormField(
+                                  controller: _customerPhoneController,
+                                  decoration: InputDecoration(
+                                    labelText: l10n.customerPhone,
+                                    border: const OutlineInputBorder(),
+                                  ),
+                                  keyboardType: TextInputType.phone,
+                                  validator: (v) =>
+                                      v!.isEmpty ? l10n.requiredField : null,
+                                ),
+                                const SizedBox(height: 16),
+                                TextFormField(
+                                  controller: _customerAddressController,
+                                  decoration: InputDecoration(
+                                    labelText: l10n.address,
+                                    border: const OutlineInputBorder(),
+                                  ),
+                                  maxLines: 2,
+                                ),
+                              ],
+                            ),
                           ),
-                          const SizedBox(height: 16),
-                          TextFormField(controller: _receiptNoController, decoration: InputDecoration(labelText: l10n.manualReceiptNo, border: OutlineInputBorder())),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(child: TextFormField(controller: _guestsController, decoration: InputDecoration(labelText: l10n.guests, border: OutlineInputBorder()), keyboardType: TextInputType.number)),
-                              const SizedBox(width: 8),
-                              Expanded(child: TextFormField(controller: _tablesController, decoration: InputDecoration(labelText: l10n.tables, border: OutlineInputBorder()), keyboardType: TextInputType.number)),
-                              const SizedBox(width: 8),
-                              Expanded(child: TextFormField(controller: _serversController, decoration: InputDecoration(labelText: l10n.servers, border: OutlineInputBorder()), keyboardType: TextInputType.number)),
-                            ],
-                          )
                         ],
                       ),
-                    )
-                  ],
-                ),
-              ),
-              
-              // --- Section 3: Booking Dates ---
-              Card(
-                child: ExpansionTile(
-                  title: Text('3. ${l10n.bookingDates}', style: TextStyle(fontWeight: FontWeight.bold)),
-                  initiallyExpanded: true,
-                  children: [
-                     _buildDateAdder(l10n),
-                    _buildDatesList(l10n),
-                  ],
-                ),
-              ),
-              
-              // --- Section 4: Financials ---
-              Card(
-                child: ExpansionTile(
-                  title: Text('4. ${l10n.financials}', style: TextStyle(fontWeight: FontWeight.bold)),
-                  initiallyExpanded: true,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
+                    ),
+
+                    // --- Event Details ---
+                    Card(
+                      child: ExpansionTile(
+                        title: Text(
+                          '2. ${l10n.eventDetails}',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        initiallyExpanded: true,
                         children: [
-                          TextFormField(controller: _totalAmountController, decoration: InputDecoration(labelText: l10n.totalAmount, border: OutlineInputBorder()), keyboardType: TextInputType.number, validator: (v) => v!.isEmpty ? 'Required' : null),
-                          const SizedBox(height: 16),
-                          TextFormField(controller: _advanceAmountController, decoration: InputDecoration(labelText: l10n.advanceAmount, border: OutlineInputBorder()), keyboardType: TextInputType.number),
-                          const SizedBox(height: 16),
-                          TextFormField(controller: _notesInWordsController, decoration: InputDecoration(labelText: l10n.inWords, border: OutlineInputBorder())),
+                          Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              children: [
+                                DropdownButtonFormField<String>(
+                                  value: _selectedEventType,
+                                  items: _eventTypes
+                                      .map(
+                                        (key) => DropdownMenuItem(
+                                          value: key,
+                                          child: Text(
+                                            _getTranslatedEventType(key, l10n),
+                                          ),
+                                        ),
+                                      )
+                                      .toList(),
+                                  onChanged: (v) =>
+                                      setState(() => _selectedEventType = v!),
+                                  decoration: InputDecoration(
+                                    labelText: l10n.eventType,
+                                    border: const OutlineInputBorder(),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                TextFormField(
+                                  controller: _receiptNoController,
+                                  decoration: InputDecoration(
+                                    labelText: l10n.manualReceiptNo,
+                                    border: const OutlineInputBorder(),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextFormField(
+                                        controller: _guestsController,
+                                        decoration: InputDecoration(
+                                          labelText: l10n.guests,
+                                          border: const OutlineInputBorder(),
+                                        ),
+                                        keyboardType: TextInputType.number,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: TextFormField(
+                                        controller: _tablesController,
+                                        decoration: InputDecoration(
+                                          labelText: l10n.tables,
+                                          border: const OutlineInputBorder(),
+                                        ),
+                                        keyboardType: TextInputType.number,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: TextFormField(
+                                        controller: _serversController,
+                                        decoration: InputDecoration(
+                                          labelText: l10n.servers,
+                                          border: const OutlineInputBorder(),
+                                        ),
+                                        keyboardType: TextInputType.number,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
                         ],
+                      ),
+                    ),
+
+                    // --- Booking Dates ---
+                    Card(
+                      child: ExpansionTile(
+                        title: Text(
+                          '3. ${l10n.bookingDates}',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        initiallyExpanded: true,
+                        children: [
+                          _buildDateAdder(l10n),
+                          _buildDatesList(l10n),
+                        ],
+                      ),
+                    ),
+
+                    // --- Financials ---
+                    Card(
+                      child: ExpansionTile(
+                        title: Text(
+                          '4. ${l10n.financials}',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        initiallyExpanded: true,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              children: [
+                                TextFormField(
+                                  controller: _totalAmountController,
+                                  decoration: InputDecoration(
+                                    labelText: l10n.totalAmount,
+                                    border: const OutlineInputBorder(),
+                                  ),
+                                  keyboardType: TextInputType.number,
+                                  validator: (v) =>
+                                      v!.isEmpty ? l10n.requiredField : null,
+                                ),
+                                const SizedBox(height: 16),
+                                // The Advance field is disabled in edit mode, as payments are managed on the detail screen
+                                if (!_isEditMode)
+                                  TextFormField(
+                                    controller: _advanceAmountController,
+                                    decoration: InputDecoration(
+                                      labelText: l10n.advanceAmount,
+                                      border: const OutlineInputBorder(),
+                                    ),
+                                    keyboardType: TextInputType.number,
+                                  ),
+                                const SizedBox(height: 16),
+                                TextFormField(
+                                  controller: _notesInWordsController,
+                                  decoration: InputDecoration(
+                                    labelText:
+                                        '${l10n.inWords} (${l10n.inWordsHint})',
+                                    border: const OutlineInputBorder(),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: _isLoading ? null : _submitForm,
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                              ),
+                            )
+                          : Text(
+                              _isEditMode ? "Update Booking" : l10n.saveBooking,
+                            ),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                     ),
                   ],
                 ),
               ),
-
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: _isLoading ? null : _submitForm,
-                child: _isLoading ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white)) : Text(l10n.saveBooking),
-                style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
-              ),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
-// -------------------------------------------------------------------
+  // -------------------------------------------------------------------
   // *****                HELPER WIDGETS START HERE                *****
   // -------------------------------------------------------------------
 
@@ -279,7 +501,9 @@ class _AddEditBookingScreenState extends State<AddEditBookingScreen> {
                       lastDate: DateTime(2100),
                     );
                     if (picked != null) {
-                      dateController.text = DateFormat('yyyy-MM-dd').format(picked);
+                      dateController.text = DateFormat(
+                        'yyyy-MM-dd',
+                      ).format(picked);
                     }
                   },
                 ),
@@ -289,8 +513,11 @@ class _AddEditBookingScreenState extends State<AddEditBookingScreen> {
                   // Map over the English keys to create the items
                   items: _timeSlots.map((String slotKey) {
                     return DropdownMenuItem<String>(
-                      value: slotKey, // The value is the English key ('Day' or 'Night')
-                      child: Text(_getTranslatedSlot(slotKey, l10n)), // The display is the translation
+                      value:
+                          slotKey, // The value is the English key ('Day' or 'Night')
+                      child: Text(
+                        _getTranslatedSlot(slotKey, l10n),
+                      ), // The display is the translation
                     );
                   }).toList(),
                   onChanged: (value) {
@@ -353,9 +580,18 @@ class _AddEditBookingScreenState extends State<AddEditBookingScreen> {
             return Card(
               margin: const EdgeInsets.symmetric(vertical: 4.0),
               child: ListTile(
-                leading: const Icon(Icons.check_circle_outline, color: Colors.green),
-                title: Text(DateFormat('MMMM d, yyyy').format(DateTime.parse(dateEntry['date']!))),
-                subtitle: Text('${l10n.timeSlot}: ${_getTranslatedSlot(dateEntry['slot']!, l10n)}'),
+                leading: const Icon(
+                  Icons.check_circle_outline,
+                  color: Colors.green,
+                ),
+                title: Text(
+                  DateFormat(
+                    'MMMM d, yyyy',
+                  ).format(DateTime.parse(dateEntry['date']!)),
+                ),
+                subtitle: Text(
+                  '${l10n.timeSlot}: ${_getTranslatedSlot(dateEntry['slot']!, l10n)}',
+                ),
                 trailing: IconButton(
                   icon: const Icon(Icons.delete_outline, color: Colors.red),
                   onPressed: () => _removeDateFromList(index),

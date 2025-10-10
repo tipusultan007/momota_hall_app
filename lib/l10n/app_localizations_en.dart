@@ -9,6 +9,9 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get orgName => 'Momota Community Center';
+
+  @override
   String get dashboardTitle => 'Dashboard';
 
   @override
@@ -93,6 +96,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cancel => 'Cancel';
+
+  @override
+  String get phone => 'Phone';
+
+  @override
+  String get password => 'Password';
 
   @override
   String get eventTypeWedding => 'Wedding';
@@ -455,6 +464,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statusPaid => 'Paid';
 
   @override
+  String get statusPending => 'Pending';
+
+  @override
   String get statusPartiallyPaid => 'Partially Paid';
 
   @override
@@ -553,4 +565,84 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get welcomeToLogin => 'Welcome Back! Sign in to continue.';
+
+  @override
+  String get newBooking => 'New Booking';
+
+  @override
+  String get filterByDate => 'Filter by Date Range';
+
+  @override
+  String get searchByHint => 'Search by Name, Phone, Event...';
+
+  @override
+  String get noBookingsFoundFilters =>
+      'No bookings found for the selected filters.';
+
+  @override
+  String get areYouSureDeleteBooking =>
+      'Are you sure you wish to delete this booking?';
+
+  @override
+  String get bookingDeleted => 'Booking deleted';
+
+  @override
+  String get failedToDeleteBooking => 'Failed to delete booking';
+
+  @override
+  String get financialSummary => 'Financial Summary';
+
+  @override
+  String get generateReport => 'Generate Report';
+
+  @override
+  String get openingBalance => 'Opening Balance';
+
+  @override
+  String get closingBalance => 'Closing Balance';
+
+  @override
+  String get totalIncomePeriod => 'Total Income (Period)';
+
+  @override
+  String get totalExpensesPeriod => 'Total Expenses (Period)';
+
+  @override
+  String get incomeCredits => 'Income / Credits';
+
+  @override
+  String get expensesDebits => 'Expenses / Debits';
+
+  @override
+  String get netCashFlow => 'Net Cash Flow for the Period';
+
+  @override
+  String get bookingPayments => 'Booking Payments';
+
+  @override
+  String get generalExpenses => 'General Expenses';
+
+  @override
+  String get salaryPayments => 'Salary Payments';
+
+  @override
+  String get loanRepayments => 'Loan Repayments';
+
+  @override
+  String get period => 'Period:';
+
+  @override
+  String get totalIncome => 'Total Income';
+
+  @override
+  String get totalExpenses => 'Total Expenses';
+
+  @override
+  String get bookingCalendar => 'Booking Calendar';
+
+  @override
+  String get noBookingsForDay => 'No bookings for this day.';
+
+  @override
+  String get dueAmount => 'Due Amount';
 }

@@ -5,6 +5,7 @@ import 'bookings/bookings_list_screen.dart';
 import 'transactions/transactions_list_screen.dart';
 import 'menu/menu_screen.dart';
 
+
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
   @override
@@ -19,6 +20,18 @@ class _MainScreenState extends State<MainScreen> {
   final _bookingsNavigatorKey = GlobalKey<NavigatorState>();
   final _transactionsNavigatorKey = GlobalKey<NavigatorState>();
   final _menuNavigatorKey = GlobalKey<NavigatorState>();
+
+  late final List<Widget> _pages;
+
+  @override
+  void initState() {
+    super.initState();
+    _pages = <Widget>[
+      DashboardScreen(key: _dashboardNavigatorKey),
+      BookingsListScreen(key: _bookingsNavigatorKey),
+      // ...
+    ];
+  }
 
   void _onItemTapped(int index) {
     // If the user taps the same tab again, pop to the first route in that tab's stack

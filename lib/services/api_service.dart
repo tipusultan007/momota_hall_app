@@ -5,11 +5,12 @@ import '../models/paginated_response.dart';
 import 'package:intl/intl.dart';
 import 'auth_service.dart';
 import 'permission_service.dart'; 
+import 'dart:typed_data';
 
 
 class ApiService {
 
-  final String _baseUrl = "http://192.168.0.103:8000/api"; 
+  final String _baseUrl = "https://mcc.umairit.com/api"; 
 
   Map<String, String> _getAuthHeaders() {
     final token = AuthService().token; // Get token directly from AuthService
@@ -155,12 +156,12 @@ Future<PaginatedResponse> getExpenses({
   }
 
 
-    Future<Map<String, dynamic>?> login(String email, String password) async {
+    Future<Map<String, dynamic>?> login(String phone, String password) async {
     try {
       final response = await http.post(
         Uri.parse('$_baseUrl/login'),
         headers: {'Content-Type': 'application/json; charset=UTF-8', 'Accept': 'application/json'},
-        body: jsonEncode({'email': email, 'password': password}),
+        body: jsonEncode({'phone': phone, 'password': password}),
       );
 
       print('[ApiService Login] Status Code: ${response.statusCode}');
@@ -252,6 +253,66 @@ Future<PaginatedResponse> getExpenses({
       print('API Error: ${response.body}');
       return null;
     }
+  }
+
+  Future<Map<String, dynamic>?> updateBooking({
+    required int id,
+    required String customerName,
+    required String customerPhone,
+    String? customerAddress,
+    required String eventType,
+    String? receiptNo,
+    String? guests,
+    String? tables,
+    String? servers,
+    required String totalAmount,
+    String? notesInWords,
+    required List<Map<String, String>> bookingDates,
+  }) async {
+    if (!AuthService().isLoggedIn) return null;
+     final body = {
+      'customer_name': customerName,
+      'customer_phone': customerPhone,
+      'customer_address': customerAddress ?? '',
+      'event_type': eventType,
+      'receipt_no': receiptNo ?? '',
+      'guests_count': guests ?? '',
+      'tables_count': tables ?? '',
+      'boys_count': servers ?? '',
+      'total_amount': totalAmount,
+      'notes_in_words': notesInWords ?? '',
+      'booking_dates': bookingDates,
+    };
+
+    try {
+      final response = await http.put(
+        Uri.parse('$_baseUrl/bookings/$id'),
+        headers: _getAuthHeaders(),
+        body: jsonEncode(body),
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body)['data'];
+      } else {
+        print('API Error updating booking: ${response.body}');
+      }
+    } catch (e) {
+      print('Error updating booking: $e');
+    }
+    return null;
+  }
+
+  Future<bool> deleteBooking(int id) async {
+    if (!AuthService().isLoggedIn) return false;
+    try {
+      final response = await http.delete(
+        Uri.parse('$_baseUrl/bookings/$id'),
+        headers: _getAuthHeaders(),
+      );
+      return response.statusCode == 204; // Success
+    } catch (e) {
+      print('Error deleting booking: $e');
+    }
+    return false;
   }
 
   // To get the category list for the form
@@ -938,6 +999,75 @@ Future<PaginatedResponse> getExpenses({
       print('Error adding booking: $e');
     }
     return null;
+  }
+  Future<Map<String, dynamic>?> getFinancialSummary({
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    if (!AuthService().isLoggedIn) return null;
+
+    try {
+      final queryParameters = {
+        'start_date': DateFormat('yyyy-MM-dd').format(startDate),
+        'end_date': DateFormat('yyyy-MM-dd').format(endDate),
+      };
+
+      final uri = Uri.parse('$_baseUrl/reports/financial-summary').replace(queryParameters: queryParameters);
+      final response = await http.get(uri, headers: _getAuthHeaders());
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+    } catch (e) {
+      print('Error fetching financial summary: $e');
+    }
+    return null;
+  }
+
+    Future<Uint8List?> downloadFinancialSummaryPDF({
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    if (!AuthService().isLoggedIn) return null;
+    try {
+      final queryParameters = {
+        'start_date': DateFormat('yyyy-MM-dd').format(startDate),
+        'end_date': DateFormat('yyyy-MM-dd').format(endDate),
+      };
+      final uri = Uri.parse('$_baseUrl/reports/financial-summary/pdf').replace(queryParameters: queryParameters);
+      final response = await http.get(uri, headers: _getAuthHeaders());
+
+      if (response.statusCode == 200) {
+        return response.bodyBytes; // Return the raw PDF byte data
+      }
+    } catch (e) {
+      print('Error downloading PDF: $e');
+    }
+    return null;
+  }
+
+ Future<Map<String, dynamic>> getCalendarEvents() async {
+    if (!AuthService().isLoggedIn) return {};
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/v1/calendar-events'),
+        headers: _getAuthHeaders(),
+      );
+      
+      // **** ADD THIS DEBUGGING BLOCK ****
+      print('--- Calendar Events API Response ---');
+      print('Status Code: ${response.statusCode}');
+      print('Response Body: ${response.body}');
+      print('----------------------------------');
+      // **********************************
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+    } catch (e) {
+      print('Error fetching calendar events: $e');
+    }
+    return {};
   }
 
 }

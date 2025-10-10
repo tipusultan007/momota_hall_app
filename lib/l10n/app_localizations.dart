@@ -98,6 +98,12 @@ abstract class AppLocalizations {
     Locale('en'),
   ];
 
+  /// No description provided for @orgName.
+  ///
+  /// In en, this message translates to:
+  /// **'Momota Community Center'**
+  String get orgName;
+
   /// No description provided for @dashboardTitle.
   ///
   /// In en, this message translates to:
@@ -265,6 +271,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cancel'**
   String get cancel;
+
+  /// No description provided for @phone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get phone;
+
+  /// No description provided for @password.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get password;
 
   /// No description provided for @eventTypeWedding.
   ///
@@ -974,6 +992,12 @@ abstract class AppLocalizations {
   /// **'Paid'**
   String get statusPaid;
 
+  /// No description provided for @statusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get statusPending;
+
   /// No description provided for @statusPartiallyPaid.
   ///
   /// In en, this message translates to:
@@ -1171,6 +1195,162 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Welcome Back! Sign in to continue.'**
   String get welcomeToLogin;
+
+  /// No description provided for @newBooking.
+  ///
+  /// In en, this message translates to:
+  /// **'New Booking'**
+  String get newBooking;
+
+  /// No description provided for @filterByDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter by Date Range'**
+  String get filterByDate;
+
+  /// No description provided for @searchByHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search by Name, Phone, Event...'**
+  String get searchByHint;
+
+  /// No description provided for @noBookingsFoundFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'No bookings found for the selected filters.'**
+  String get noBookingsFoundFilters;
+
+  /// No description provided for @areYouSureDeleteBooking.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you wish to delete this booking?'**
+  String get areYouSureDeleteBooking;
+
+  /// No description provided for @bookingDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking deleted'**
+  String get bookingDeleted;
+
+  /// No description provided for @failedToDeleteBooking.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to delete booking'**
+  String get failedToDeleteBooking;
+
+  /// No description provided for @financialSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Financial Summary'**
+  String get financialSummary;
+
+  /// No description provided for @generateReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate Report'**
+  String get generateReport;
+
+  /// No description provided for @openingBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening Balance'**
+  String get openingBalance;
+
+  /// No description provided for @closingBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Closing Balance'**
+  String get closingBalance;
+
+  /// No description provided for @totalIncomePeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Income (Period)'**
+  String get totalIncomePeriod;
+
+  /// No description provided for @totalExpensesPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Expenses (Period)'**
+  String get totalExpensesPeriod;
+
+  /// No description provided for @incomeCredits.
+  ///
+  /// In en, this message translates to:
+  /// **'Income / Credits'**
+  String get incomeCredits;
+
+  /// No description provided for @expensesDebits.
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses / Debits'**
+  String get expensesDebits;
+
+  /// No description provided for @netCashFlow.
+  ///
+  /// In en, this message translates to:
+  /// **'Net Cash Flow for the Period'**
+  String get netCashFlow;
+
+  /// No description provided for @bookingPayments.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking Payments'**
+  String get bookingPayments;
+
+  /// No description provided for @generalExpenses.
+  ///
+  /// In en, this message translates to:
+  /// **'General Expenses'**
+  String get generalExpenses;
+
+  /// No description provided for @salaryPayments.
+  ///
+  /// In en, this message translates to:
+  /// **'Salary Payments'**
+  String get salaryPayments;
+
+  /// No description provided for @loanRepayments.
+  ///
+  /// In en, this message translates to:
+  /// **'Loan Repayments'**
+  String get loanRepayments;
+
+  /// No description provided for @period.
+  ///
+  /// In en, this message translates to:
+  /// **'Period:'**
+  String get period;
+
+  /// No description provided for @totalIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Income'**
+  String get totalIncome;
+
+  /// No description provided for @totalExpenses.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Expenses'**
+  String get totalExpenses;
+
+  /// No description provided for @bookingCalendar.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking Calendar'**
+  String get bookingCalendar;
+
+  /// No description provided for @noBookingsForDay.
+  ///
+  /// In en, this message translates to:
+  /// **'No bookings for this day.'**
+  String get noBookingsForDay;
+
+  /// No description provided for @dueAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Due Amount'**
+  String get dueAmount;
 }
 
 class _AppLocalizationsDelegate

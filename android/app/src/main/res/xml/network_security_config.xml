@@ -1,7 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
+    <!-- 
+        By default, block all cleartext (non-HTTPS) traffic.
+        This is the secure default for production apps.
+    -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- 
+        Create a specific exception ONLY for your live domain.
+        This tells Android to trust your server completely.
+    -->
+    <domain-config>
+        <domain includeSubdomains="true">mcc.umairit.com</domain>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </domain-config>
+
+    <!-- 
+        (Optional but recommended) Keep the local domain for testing debug builds.
+        This domain will be ignored in release builds.
+    -->
     <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">10.0.2.2</domain> <!-- Special IP for Android Emulator -->
-        <domain includeSubdomains="true">192.168.0.103</domain> <!-- Your computer's local IP -->
+        <domain includeSubdomains="true">192.168.0.104</domain> <!-- Your local IP -->
     </domain-config>
 </network-security-config>

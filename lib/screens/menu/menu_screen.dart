@@ -14,6 +14,7 @@ import '../../services/permission_service.dart';
 import '../../providers/locale_provider.dart';
 import '../../l10n/app_localizations.dart';
 import 'about_screen.dart'; 
+import '../reports/financial_summary_screen.dart'; // Import the new screen
 
 
 class MenuScreen extends StatelessWidget {
@@ -88,6 +89,14 @@ class MenuScreen extends StatelessWidget {
               _buildMenuTile(context, l10n.borrowedFunds, Icons.account_balance, const BorrowedFundsListScreen()),
             if (permissions.can('manage lenders'))
               _buildMenuTile(context, l10n.manageLenders, Icons.business_center_outlined, const LendersListScreen()),
+            const Divider(),
+          ],
+
+           if (permissions.can('view reports')) ...[
+            _buildCategoryHeader('Reports'),
+            // ** ADD THIS NEW LINK **
+            _buildMenuTile(context, 'Financial Summary', Icons.analytics_outlined, const FinancialSummaryScreen()),
+            // Your other report links...
             const Divider(),
           ],
 

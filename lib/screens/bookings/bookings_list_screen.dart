@@ -7,6 +7,9 @@ import '../../services/auth_service.dart';
 import '../../services/permission_service.dart';
 import 'booking_detail_screen.dart';
 import 'add_edit_booking_screen.dart';
+import '../../l10n/app_localizations.dart';
+import '../mixins/refreshable_screen_mixin.dart';
+import '../calendar/calendar_screen.dart'; // Import the new screen
 
 
 class BookingsListScreen extends StatefulWidget {
@@ -15,11 +18,10 @@ class BookingsListScreen extends StatefulWidget {
   State<BookingsListScreen> createState() => _BookingsListScreenState();
 }
 
-class _BookingsListScreenState extends State<BookingsListScreen> {
+class _BookingsListScreenState extends State<BookingsListScreen> with RefreshableScreenState {
   final ApiService _apiService = ApiService();
   final TextEditingController _searchController = TextEditingController();
 
-  // --- State Variables ---
   List<dynamic> _bookings = [];
   int _currentPage = 1;
   bool _hasNextPage = true;
@@ -32,7 +34,7 @@ class _BookingsListScreenState extends State<BookingsListScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchInitialBookings();
+    refreshData();
   }
 
   @override
@@ -41,42 +43,25 @@ class _BookingsListScreenState extends State<BookingsListScreen> {
     super.dispose();
   }
 
-  // Fetches the first page of data based on all current filters
-  Future<void> _fetchInitialBookings({String? query}) async {
-    setState(() {
-      _isLoading = true;
-      // Use the provided query, or fallback to the existing one
-      _currentSearchQuery = query ?? _currentSearchQuery;
-    });
-
-    PaginatedResponse response = await _apiService.getBookings(
-      page: 1,
-      query: _currentSearchQuery,
-      startDate: _startDate,
-      endDate: _endDate,
-    );
-
+  @override
+  Future<void> refreshData({String? query}) async {
+    setState(() { _isLoading = true; _currentSearchQuery = query ?? _currentSearchQuery; });
+    PaginatedResponse response = await _apiService.getBookings(page: 1, query: _currentSearchQuery, startDate: _startDate, endDate: _endDate);
     if (mounted) {
       setState(() {
         _bookings = response.items;
-        _currentPage = 1; // Always reset to page 1 on a new fetch/filter
+        _currentPage = 1;
         _hasNextPage = response.hasMorePages;
         _isLoading = false;
       });
     }
   }
 
-  // Fetches subsequent pages with the current filters
   Future<void> _loadMore() async {
     if (_hasNextPage && !_isLoading && !_isLoadMoreRunning) {
       setState(() { _isLoadMoreRunning = true; });
       _currentPage++;
-      PaginatedResponse response = await _apiService.getBookings(
-        page: _currentPage,
-        query: _currentSearchQuery,
-        startDate: _startDate,
-        endDate: _endDate,
-      );
+      PaginatedResponse response = await _apiService.getBookings(page: _currentPage, query: _currentSearchQuery, startDate: _startDate, endDate: _endDate);
       if (mounted) {
         setState(() {
           _bookings.addAll(response.items);
@@ -87,21 +72,11 @@ class _BookingsListScreenState extends State<BookingsListScreen> {
     }
   }
 
-  // --- Filter and Navigation Methods ---
-
   Future<void> _showDateRangePicker() async {
-    final picked = await showDateRangePicker(
-      context: context,
-      initialDateRange: _startDate != null && _endDate != null ? DateTimeRange(start: _startDate!, end: _endDate!) : null,
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
-    );
+    final picked = await showDateRangePicker(context: context, initialDateRange: _startDate != null && _endDate != null ? DateTimeRange(start: _startDate!, end: _endDate!) : null, firstDate: DateTime(2020), lastDate: DateTime.now().add(const Duration(days: 365 * 5)));
     if (picked != null) {
-      setState(() {
-        _startDate = picked.start;
-        _endDate = picked.end;
-      });
-      _fetchInitialBookings();
+      setState(() { _startDate = picked.start; _endDate = picked.end; });
+      refreshData();
     }
   }
   
@@ -112,130 +87,133 @@ class _BookingsListScreenState extends State<BookingsListScreen> {
       _searchController.clear();
       _currentSearchQuery = '';
     });
-    _fetchInitialBookings();
+    refreshData();
   }
 
   void _navigateToAddBooking() async {
-    final result = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (context) => const AddEditBookingScreen()),
-    );
-    if (result == true) {
-      _fetchInitialBookings(); // Refresh list after adding
-    }
+    final result = await Navigator.of(context).push<bool>(MaterialPageRoute(builder: (context) => const AddEditBookingScreen()));
+    if (result == true) refreshData();
+  }
+
+  void _navigateToEditBooking(int bookingId) async {
+    final result = await Navigator.of(context).push<bool>(MaterialPageRoute(builder: (context) => AddEditBookingScreen(bookingId: bookingId)));
+    if (result == true) refreshData(query: _currentSearchQuery);
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     bool hasFilters = _startDate != null || _currentSearchQuery.isNotEmpty;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('All Bookings'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: _showDateRangePicker,
-            tooltip: 'Filter by Date Range',
-          ),
-        ],
+        title: Text(l10n.bookingsTitle),
+        actions: [IconButton(icon: const Icon(Icons.filter_list), onPressed: _showDateRangePicker, tooltip: l10n.filterByDate),
+         IconButton(
+            icon: const Icon(Icons.calendar_view_month),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const CalendarScreen()),
+              );
+            },
+            tooltip: 'Calendar View',
+          )],
       ),
-     floatingActionButton: Consumer<AuthService>(
+      floatingActionButton: Consumer<AuthService>(
         builder: (context, authService, child) {
-          // The logic remains the same, but it's now listening to the ChangeNotifier
-          if (!authService.isLoggedIn || !PermissionService().can('create bookings')) {
-            return const SizedBox.shrink(); // Hide button
-          }
-          
-          return FloatingActionButton(
-            onPressed: _navigateToAddBooking,
-            child: const Icon(Icons.add),
-            tooltip: 'New Booking',
-          );
+          if (!authService.isLoggedIn || !PermissionService().can('create bookings')) return const SizedBox.shrink();
+          return FloatingActionButton(onPressed: _navigateToAddBooking, child: const Icon(Icons.add), tooltip: l10n.newBooking);
         },
       ),
       body: Column(
         children: [
-          // Search Bar
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                labelText: 'Search by Name, Phone, Event...',
+                labelText: l10n.searchByHint,
                 border: const OutlineInputBorder(),
                 prefixIcon: const Icon(Icons.search),
-                suffixIcon: _currentSearchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                          _fetchInitialBookings(query: '');
-                        },
-                      )
-                    : null,
+                suffixIcon: _currentSearchQuery.isNotEmpty ? IconButton(icon: const Icon(Icons.clear), onPressed: () { _searchController.clear(); refreshData(query: ''); }) : null,
               ),
-              onSubmitted: (value) => _fetchInitialBookings(query: value),
+              onSubmitted: (value) => refreshData(query: value),
             ),
           ),
-
-          // Filter Summary Header
           if (hasFilters)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               color: Theme.of(context).primaryColor.withOpacity(0.1),
               child: Row(
                 children: [
-                  Expanded(
-                    child: Text(
-                      _buildFilterSummary(),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.clear, size: 20),
-                    onPressed: _clearFilters,
-                    tooltip: 'Clear All Filters',
-                  )
+                  Expanded(child: Text(_buildFilterSummary(l10n), style: const TextStyle(fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis)),
+                  IconButton(icon: const Icon(Icons.clear, size: 20), onPressed: _clearFilters, tooltip: l10n.clearFilters)
                 ],
               ),
             ),
-          
-          // The List View
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : RefreshIndicator(
-                    onRefresh: () => _fetchInitialBookings(query: _currentSearchQuery),
+                    onRefresh: () => refreshData(query: _currentSearchQuery),
                     child: _bookings.isEmpty
-                        ? const Center(child: Text('No bookings found for the selected filters.'))
+                        ? LayoutBuilder(
+                            builder: (context, constraints) {
+                              return SingleChildScrollView(
+                                physics: const AlwaysScrollableScrollPhysics(), // This makes it always scrollable
+                                child: ConstrainedBox(
+                                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                                  child: const Center(child: Text('No bookings found for the selected filters.')),
+                                ),
+                              );
+                            },
+                          )
                         : ListView.builder(
                             padding: const EdgeInsets.only(bottom: 80),
                             itemCount: _bookings.length + (_hasNextPage ? 1 : 0),
                             itemBuilder: (context, index) {
-                              if (index == _bookings.length) {
-                                return _buildLoadMoreButton();
-                              }
+                              if (index == _bookings.length) return _buildLoadMoreButton(l10n);
                               final booking = _bookings[index];
-                              return Card(
-                                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                child: ListTile(
-                                  title: Text(booking['customer_name'] ?? 'No Name'),
-                                  subtitle: Text('${booking['event_type']} - ${booking['first_event_date'] ?? ''}'),
-                                  trailing: Chip(
-                                    label: Text(booking['status'] ?? ''),
-                                    backgroundColor: _getStatusColor(booking['status']),
-                                    labelStyle: const TextStyle(color: Colors.white),
+                              return Dismissible(
+                                key: Key(booking['id'].toString()),
+                                direction: PermissionService().can('delete bookings') ? DismissDirection.endToStart : DismissDirection.none,
+                                background: Container(color: Colors.red, alignment: Alignment.centerRight, padding: const EdgeInsets.symmetric(horizontal: 20.0), child: const Icon(Icons.delete, color: Colors.white)),
+                                confirmDismiss: (direction) async => await showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) => AlertDialog(
+                                    title: Text(l10n.confirmDelete),
+                                    content: Text(l10n.areYouSureDeleteBooking),
+                                    actions: [
+                                      TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(l10n.cancel.toUpperCase())),
+                                      TextButton(onPressed: () => Navigator.of(context).pop(true), child: Text(l10n.delete.toUpperCase())),
+                                    ],
                                   ),
-                                  onTap: () async {
-                                    final result = await Navigator.of(context).push(
-                                      MaterialPageRoute(builder: (context) => BookingDetailScreen(bookingId: booking['id'])),
-                                    );
-                                    // Refresh if a payment was made on the detail screen
-                                    if(result == true) {
-                                      _fetchInitialBookings(query: _currentSearchQuery);
-                                    }
-                                  },
+                                ),
+                                onDismissed: (direction) async {
+                                  bool deleted = await _apiService.deleteBooking(booking['id']);
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(deleted ? l10n.bookingDeleted : l10n.failedToDeleteBooking)));
+                                    if (deleted) setState(() => _bookings.removeAt(index));
+                                  }
+                                },
+                                child: Card(
+                                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  child: ListTile(
+                                    title: Text(booking['customer_name'] ?? 'No Name'),
+                                    subtitle: Text('${booking['event_type']} - ${booking['first_event_date'] ?? ''}'),
+                                    trailing: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Chip(label: Text(_getStatusText(booking['status'], l10n)), backgroundColor: _getStatusColor(booking['status']), labelStyle: const TextStyle(color: Colors.white)),
+                                        if (PermissionService().can('edit bookings'))
+                                          IconButton(icon: const Icon(Icons.edit, color: Colors.grey), onPressed: () => _navigateToEditBooking(booking['id'])),
+                                      ],
+                                    ),
+                                    onTap: () async {
+                                      final result = await Navigator.of(context).push(MaterialPageRoute(builder: (context) => BookingDetailScreen(bookingId: booking['id'])));
+                                      if (result == true) refreshData(query: _currentSearchQuery);
+                                    },
+                                  ),
                                 ),
                               );
                             },
@@ -247,34 +225,35 @@ class _BookingsListScreenState extends State<BookingsListScreen> {
     );
   }
 
-  // Helper method for the filter summary
-  String _buildFilterSummary() {
+  String _buildFilterSummary(AppLocalizations l10n) {
     List<String> filters = [];
     if (_startDate != null && _endDate != null) {
-      filters.add('Dates: ${DateFormat.yMd().format(_startDate!)} - ${DateFormat.yMd().format(_endDate!)}');
+      filters.add('${l10n.date}: ${DateFormat.yMd().format(_startDate!)} - ${DateFormat.yMd().format(_endDate!)}');
     }
     if (_currentSearchQuery.isNotEmpty) {
-      filters.add('Search: "$_currentSearchQuery"');
+      filters.add('${l10n.searchByHint.split('...')[0]}: "$_currentSearchQuery"');
     }
-    return filters.join(' | ');
+    return '${l10n.filters} ${filters.join(' | ')}';
   }
   
-  // Helper for the "Load More" button
-  Widget _buildLoadMoreButton() {
+  Widget _buildLoadMoreButton(AppLocalizations l10n) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Center(
-        child: _isLoadMoreRunning
-            ? const CircularProgressIndicator()
-            : OutlinedButton(
-                onPressed: _loadMore,
-                child: const Text('Load More'),
-              ),
+        child: _isLoadMoreRunning ? const CircularProgressIndicator() : OutlinedButton(onPressed: _loadMore, child: Text(l10n.loadMore)),
       ),
     );
   }
 
-  // Helper for status colors
+  String _getStatusText(String? status, AppLocalizations l10n) {
+    switch (status) {
+      case 'Paid': return l10n.statusPaid;
+      case 'Partially Paid': return l10n.statusPartiallyPaid;
+      case 'Pending': return l10n.statusPending;
+      default: return status ?? '';
+    }
+  }
+
   Color _getStatusColor(String? status) {
     switch (status) {
       case 'Paid': return Colors.green;

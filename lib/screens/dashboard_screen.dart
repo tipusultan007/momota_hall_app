@@ -6,6 +6,7 @@ import '../../services/api_service.dart';
 import '../../services/auth_service.dart';
 import '../models/paginated_response.dart';
 import './transactions/transactions_list_screen.dart';
+import 'login_screen.dart';
 import '../l10n/app_localizations.dart';
 
 
@@ -25,6 +26,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
     _fetchData();
+  }
+
+   Future<void> _logout(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
+
+    // Show a confirmation dialog before logging out
+    bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(l10n.confirmLogout),
+          content: Text(l10n.areYouSureLogout),
+          actions: <Widget>[
+            TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(l10n.cancel)),
+            TextButton(onPressed: () => Navigator.of(context).pop(true), child: Text(l10n.logout)),
+          ],
+        );
+      },
+    );
+    
+    if (confirmed == true) {
+      // This single call handles clearing the token, user name, and permissions
+      await AuthService().clearAuthData();
+      
+      // Navigate to the LoginScreen and remove all previous routes
+      if (context.mounted) {
+        // Use the root navigator to ensure we exit the main app shell
+        Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (Route<dynamic> route) => false,
+        );
+      }
+    }
   }
 
   Future<void> _fetchData() async {
@@ -55,7 +89,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         title: Text(l10n.dashboardTitle),
         actions: [
           IconButton(
-            onPressed: () { /* TODO: Implement Logout */ },
+             onPressed: () => _logout(context),
             icon: const Icon(Icons.logout),
             tooltip: 'Logout',
           )
